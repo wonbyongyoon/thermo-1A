@@ -1,0 +1,1024 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>thermo-1A</title>
+<!--
+  thermo-1A : 열역학 제1법칙 실습 (물리화학, Ball Physical Chemistry 2장)
+  작성자: 강원대학교 식품공정공학연구실 윤원병
+  - 단일 HTML 파일. GitHub Pages에 index.html 로 올리면 바로 동작합니다.
+  - 수식 표시는 KaTeX(CDN)를 사용합니다.
+  - 부호 규약: 물리화학 ΔU = q + w  (w > 0 : 주위가 계에 일을 함)
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<style>
+/* ===================== 기본 스타일 (색상 토큰) ===================== */
+:root{
+  --bg:#f5f6f8; --panel:#ffffff; --ink:#1c2230; --muted:#5b6475; --line:#dde1e8;
+  --accent:#1f5fd6; --accent-soft:#e7efff;
+  --q:#d9480f;   /* 열 q */
+  --w:#2b8a3e;   /* 일 w */
+  --u:#1f5fd6;   /* ΔU */
+  --h:#7048e8;   /* ΔH */
+  --good:#2b8a3e; --bad:#c92a2a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans KR",system-ui,sans-serif;font-size:15px;line-height:1.6}
+header{background:#14213d;color:#fff;padding:14px 20px 0}
+header h1{margin:0;font-size:22px;letter-spacing:.5px}
+header .sub{font-size:13px;opacity:.8;margin-bottom:10px}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{background:transparent;border:0;color:#cfd6e6;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer;border-radius:8px 8px 0 0}
+nav button.on{background:var(--bg);color:var(--ink);font-weight:700}
+main{max-width:1280px;margin:0 auto;padding:16px}
+section.tab{display:none}
+section.tab.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 8px;font-size:18px}
+.card h3{margin:14px 0 6px;font-size:15px}
+.grid{display:grid;gap:14px}
+.lab-grid{grid-template-columns:270px 1fr}
+.two{grid-template-columns:1fr 1fr}
+.three{grid-template-columns:1fr 1fr 1fr}
+@media (max-width:900px){.lab-grid,.two,.three{grid-template-columns:1fr}}
+label.ctl{display:block;font-size:13px;color:var(--muted);margin:10px 0 2px}
+label.ctl b{color:var(--ink)}
+input[type=range]{width:100%}
+input[type=number]{width:100%;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font:inherit}
+select{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;font:inherit;background:#fff}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
+.btn.ghost{background:var(--accent-soft);color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.proc-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.proc-list button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 6px;font:inherit;font-size:13px;cursor:pointer;text-align:left}
+.proc-list button.on{border-color:var(--accent);background:var(--accent-soft);font-weight:700}
+canvas{width:100%;display:block}
+.cyl{height:360px}
+.pv{height:360px}
+.muted{color:var(--muted);font-size:13px}
+.note{background:#fff8e6;border:1px solid #f1d58a;border-radius:8px;padding:8px 12px;font-size:13.5px}
+.info{background:var(--accent-soft);border:1px solid #c4d6fb;border-radius:8px;padding:8px 12px;font-size:13.5px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+th{background:#f0f2f6}
+/* 에너지 막대 */
+.bars .bar{display:grid;grid-template-columns:70px 1fr 110px;align-items:center;gap:8px;margin:5px 0}
+.bars .track{position:relative;height:20px;background:#f0f2f6;border-radius:4px}
+.bars .track::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;border-left:2px solid #9aa3b5}
+.bars .fill{position:absolute;top:2px;bottom:2px;border-radius:3px}
+.bars .val{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+.steps .katex-display{margin:.45em 0;overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.check-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:600px){.check-grid{grid-template-columns:1fr 1fr}}
+.fb{font-size:13px;min-height:18px}
+.ok{color:var(--good);font-weight:700}.ng{color:var(--bad);font-weight:700}
+/* 유도 단계 */
+.dstep{border-left:4px solid var(--accent);background:#fafbff;padding:6px 12px;margin:8px 0;border-radius:0 8px 8px 0;animation:fade .35s}
+.dstep h4{margin:2px 0;font-size:14px;color:var(--accent)}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+.quiz{background:#fff;border:1px dashed #9db6ec;border-radius:8px;padding:8px 12px;margin:8px 0}
+.quiz button{margin:4px 6px 4px 0;background:#fff;border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer;font:inherit}
+.quiz button.wrong{border-color:var(--bad);color:var(--bad)}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:18px}
+.pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:700}
+.legend span{display:inline-block;margin-right:12px;font-size:13px}
+.legend i{display:inline-block;width:14px;height:4px;margin-right:4px;vertical-align:middle}
+</style>
+</head>
+<body>
+<header>
+  <h1>thermo-1A · 열역학 제1법칙 실험실</h1>
+  <div class="sub">물리화학 (Ball, <i>Physical Chemistry</i> 2장) · 부호 규약 \(\Delta U = q + w\) · 작성자: 강원대학교 식품공정공학연구실 윤원병</div>
+  <nav id="nav">
+    <button data-t="concept" class="on">① 개념과 부호</button>
+    <button data-t="lab">② 과정 실험실</button>
+    <button data-t="path">③ 경로 비교</button>
+    <button data-t="deriv">④ 전미분 · Cv · Cp</button>
+    <button data-t="jt">⑤ 줄-톰슨</button>
+    <button data-t="quiz">⑥ 연습문제</button>
+  </nav>
+</header>
+
+<main>
+<!-- ======================================================= -->
+<!-- ① 개념 탭                                               -->
+<!-- ======================================================= -->
+<section class="tab on" id="t-concept">
+  <div class="grid two">
+    <div class="card">
+      <h2>물리화학의 부호 규약: \(\Delta U = q + w\)</h2>
+      <svg viewBox="0 0 520 230" style="width:100%;max-width:520px">
+        <defs>
+          <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker>
+        </defs>
+        <rect x="6" y="6" width="508" height="218" rx="12" fill="#f7f8fb" stroke="#ccd2dd" stroke-dasharray="5 4"/>
+        <text x="18" y="28" font-size="13" fill="#5b6475">주위 (surroundings)</text>
+        <rect x="190" y="60" width="140" height="110" rx="10" fill="#e7efff" stroke="#1f5fd6" stroke-width="2"/>
+        <text x="260" y="105" text-anchor="middle" font-size="18" font-weight="700" fill="#14213d">계 (system)</text>
+        <text x="260" y="132" text-anchor="middle" font-size="15" fill="#1f5fd6">ΔU = q + w</text>
+        <line x1="40" y1="95" x2="182" y2="95" stroke="#d9480f" stroke-width="4" marker-end="url(#ar)"/>
+        <text x="40" y="85" font-size="14" fill="#d9480f" font-weight="700">q &gt; 0</text>
+        <text x="40" y="118" font-size="12" fill="#d9480f">계가 열을 흡수</text>
+        <line x1="480" y1="95" x2="338" y2="95" stroke="#2b8a3e" stroke-width="4" marker-end="url(#ar)"/>
+        <text x="400" y="85" font-size="14" fill="#2b8a3e" font-weight="700">w &gt; 0</text>
+        <text x="352" y="118" font-size="12" fill="#2b8a3e">주위가 계에 일을 함(압축)</text>
+        <text x="260" y="200" text-anchor="middle" font-size="12.5" fill="#5b6475">계로 <tspan font-weight="700">들어오는</tspan> 에너지는 모두 (+), 계에서 나가는 에너지는 (−)</text>
+      </svg>
+      <table style="margin-top:8px">
+        <tr><th></th><th>물리화학 (Ball)</th><th>공학 열역학(일부 교재)</th></tr>
+        <tr><td>1법칙</td><td>\(\Delta U = q + w\)</td><td>\(\Delta U = Q - W\)</td></tr>
+        <tr><td>일의 기준</td><td>\(w\): 계가 <b>받은</b> 일</td><td>\(W\): 계가 <b>한</b> 일</td></tr>
+        <tr><td>팽창 일</td><td>\(w = -\int P_{ext}\,dV\)</td><td>\(W = +\int P\,dV\)</td></tr>
+        <tr><td>관계</td><td colspan="2">\(q = Q,\quad w = -W\)  → 같은 물리 현상, 부호 표현만 다름</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h2>상태함수와 경로함수</h2>
+      <p><b>상태함수</b> \(U, H, T, P, V\): 현재 상태만으로 값이 결정. 미소변화는 <b>완전미분(exact differential)</b> \(dU\)이고
+      $$\Delta U = \int_1^2 dU = U_2 - U_1,\qquad \oint dU = 0$$</p>
+      <p><b>경로함수</b> \(q, w\): 과정(경로)에 따라 값이 달라짐. 미소량은 <b>불완전미분</b>으로 \(\dbar q,\ \dbar w\)로 구별하여 씁니다 (교재에 따라 \(\delta q\)).
+      $$dU = \dbar q + \dbar w,\qquad \int_1^2 \dbar q = q \ (\ne q_2 - q_1)$$</p>
+      <p>압력-부피 일: \(\dbar w = -P_{ext}\,dV\). 가역과정에서는 \(P_{ext} = P\) (계의 압력)이므로 \(w_{rev} = -\int P\,dV\) = P–V 선도에서 경로 아래 면적(부호 포함).</p>
+      <div class="info"><b>가역 과정</b>: 매 순간 계가 평형에 무한히 가깝게 유지되며, 무한소 변화로 방향을 되돌릴 수 있는 과정. 경로가 P–V 선도에 선으로 그려집니다.<br>
+      <b>비가역 과정</b>: 유한한 압력차로 일어나는 실제 과정. 중간 상태의 계 압력은 정의되지 않으므로, 일은 <b>외부압력</b>으로 계산합니다: \(w = -P_{ext}\Delta V\).</div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>이상기체 과정 요약 (Ball 2장)</h2>
+    <p class="muted">이상기체에서 \(U\)와 \(H\)는 온도만의 함수(줄 실험, \((\partial U/\partial V)_T=0\)) → 어떤 과정이든 \(\Delta U = nC_{V,m}\Delta T\), \(\Delta H = nC_{P,m}\Delta T\).</p>
+    <div style="overflow-x:auto">
+    <table>
+      <tr><th>과정</th><th>조건</th><th>\(w\)</th><th>\(q\)</th><th>\(\Delta U\)</th><th>\(\Delta H\)</th></tr>
+      <tr><td>등온 가역</td><td>\(T\) 일정, \(P_{ext}=P\)</td><td>\(-nRT\ln\frac{V_2}{V_1}\)</td><td>\(-w\)</td><td>0</td><td>0</td></tr>
+      <tr><td>등온 비가역</td><td>\(T\), \(P_{ext}\) 일정</td><td>\(-P_{ext}\Delta V\)</td><td>\(-w\)</td><td>0</td><td>0</td></tr>
+      <tr><td>자유 팽창</td><td>\(P_{ext}=0\)</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+      <tr><td>등적</td><td>\(\Delta V=0\)</td><td>0</td><td>\(q_V = nC_{V,m}\Delta T\)</td><td>\(nC_{V,m}\Delta T\)</td><td>\(nC_{P,m}\Delta T\)</td></tr>
+      <tr><td>등압</td><td>\(P\) 일정</td><td>\(-P\Delta V = -nR\Delta T\)</td><td>\(q_P = nC_{P,m}\Delta T\)</td><td>\(nC_{V,m}\Delta T\)</td><td>\(nC_{P,m}\Delta T\)</td></tr>
+      <tr><td>단열 가역</td><td>\(q=0\), \(PV^\gamma\)=일정</td><td>\(nC_{V,m}\Delta T\)</td><td>0</td><td>\(nC_{V,m}\Delta T\)</td><td>\(nC_{P,m}\Delta T\)</td></tr>
+      <tr><td>단열 비가역</td><td>\(q=0\), \(P_{ext}\) 일정</td><td>\(-P_{ext}\Delta V\)</td><td>0</td><td>\(=w\)</td><td>\(nC_{P,m}\Delta T\)</td></tr>
+      <tr><td>줄-톰슨 (교축)</td><td>\(q=0\), 등엔탈피</td><td>\(P_1V_1-P_2V_2\)</td><td>0</td><td>\(=w\)</td><td>0</td></tr>
+    </table>
+    </div>
+    <p class="muted" style="margin-top:8px">단열 가역 관계식: \(TV^{\gamma-1}=\) 일정, \(PV^{\gamma}=\) 일정, \(V_1T_1^{\,c}=V_2T_2^{\,c}\ (c = C_{V,m}/R)\), \(\gamma = C_{P,m}/C_{V,m}\).
+    단원자: \(C_{V,m}=\tfrac32R,\ \gamma=\tfrac53\) · 이원자: \(C_{V,m}=\tfrac52R,\ \gamma=\tfrac75\). 단위 환산: \(1\ \text{L·bar} = 100\ \text{J}\), \(R = 8.314\ \text{J mol}^{-1}\text{K}^{-1} = 0.08314\ \text{L bar mol}^{-1}\text{K}^{-1}\).</p>
+  </div>
+</section>
+
+<!-- ======================================================= -->
+<!-- ② 과정 실험실                                            -->
+<!-- ======================================================= -->
+<section class="tab" id="t-lab">
+  <div class="grid lab-grid">
+    <div class="card">
+      <h2>조건 설정</h2>
+      <label class="ctl">기체 (이상기체)</label>
+      <select id="lab-gas"><option value="mono">단원자 (He, Ar): C<sub>V,m</sub>=3/2 R</option><option value="di">이원자 (N₂, O₂): C<sub>V,m</sub>=5/2 R</option></select>
+      <label class="ctl">물질량 n = <b id="lab-n-v"></b> mol</label>
+      <input type="range" id="lab-n" min="0.2" max="5" step="0.1" value="1">
+      <label class="ctl">초기 온도 T₁ = <b id="lab-T1-v"></b> K</label>
+      <input type="range" id="lab-T1" min="150" max="800" step="5" value="300">
+      <label class="ctl">초기 압력 P₁ = <b id="lab-P1-v"></b> bar</label>
+      <input type="range" id="lab-P1" min="0.5" max="10" step="0.1" value="2">
+      <label class="ctl" style="margin-top:14px">과정 선택</label>
+      <div class="proc-list" id="proc-list"></div>
+      <label class="ctl" id="lab-par-l"></label>
+      <input type="range" id="lab-par">
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="lab-play">▶ 진행</button>
+        <button class="btn ghost" id="lab-reset">↺ 처음으로</button>
+      </div>
+      <label class="ctl">진행도 <b id="lab-s-v"></b></label>
+      <input type="range" id="lab-s" min="0" max="1" step="0.005" value="0">
+      <label class="ctl" id="lab-ovl-wrap" style="display:none"><input type="checkbox" id="lab-ovl" checked> 같은 최종상태로 가는 <b>가역 경로</b> 겹쳐 보기</label>
+      <label class="ctl"><input type="checkbox" id="lab-eng"> 공학 부호(Q, W)도 함께 표시</label>
+      <label class="ctl"><input type="checkbox" id="lab-hide"> <b>학습 모드</b>: 결과를 숨기고 직접 계산</label>
+    </div>
+    <div>
+      <div class="card">
+        <h2 id="lab-title"></h2>
+        <div class="muted" id="lab-desc"></div>
+        <div class="grid two" style="margin-top:8px">
+          <canvas id="lab-cyl" class="cyl"></canvas>
+          <canvas id="lab-pv" class="pv"></canvas>
+        </div>
+      </div>
+      <div class="grid two">
+        <div class="card">
+          <h3 style="margin-top:0">에너지 출입 (현재 진행도까지 누적)</h3>
+          <div class="bars" id="lab-bars"></div>
+          <div id="lab-eng-box" class="info" style="display:none;margin-top:8px"></div>
+          <h3>상태</h3>
+          <div id="lab-states"></div>
+        </div>
+        <div class="card steps">
+          <h3 style="margin-top:0">계산 과정</h3>
+          <div id="lab-check" style="display:none">
+            <p class="muted">아래 값을 J 단위로 입력하세요 (부호 포함, 물리화학 규약).</p>
+            <div class="check-grid">
+              <div><label class="ctl">q (J)</label><input type="number" id="ck-q"><div class="fb" id="fb-q"></div></div>
+              <div><label class="ctl">w (J)</label><input type="number" id="ck-w"><div class="fb" id="fb-w"></div></div>
+              <div><label class="ctl">ΔU (J)</label><input type="number" id="ck-dU"><div class="fb" id="fb-dU"></div></div>
+              <div><label class="ctl">ΔH (J)</label><input type="number" id="ck-dH"><div class="fb" id="fb-dH"></div></div>
+            </div>
+            <div class="row" style="margin-top:6px"><button class="btn" id="ck-go">채점</button><button class="btn ghost" id="ck-show">풀이 보기</button></div>
+          </div>
+          <div id="lab-steps"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= -->
+<!-- ③ 경로 비교                                              -->
+<!-- ======================================================= -->
+<section class="tab" id="t-path">
+  <div class="grid lab-grid">
+    <div class="card">
+      <h2>같은 상태 A → B, 다른 경로</h2>
+      <label class="ctl">기체</label>
+      <select id="pa-gas"><option value="mono">단원자 C<sub>V,m</sub>=3/2 R</option><option value="di">이원자 C<sub>V,m</sub>=5/2 R</option></select>
+      <label class="ctl">n (mol)</label><input type="number" id="pa-n" value="1" min="0.1" step="0.1">
+      <div class="grid two" style="gap:8px">
+        <div><label class="ctl">P<sub>A</sub> (bar)</label><input type="number" id="pa-PA" value="4" step="0.1"></div>
+        <div><label class="ctl">V<sub>A</sub> (L)</label><input type="number" id="pa-VA" value="6" step="0.1"></div>
+        <div><label class="ctl">P<sub>B</sub> (bar)</label><input type="number" id="pa-PB" value="1" step="0.1"></div>
+        <div><label class="ctl">V<sub>B</sub> (L)</label><input type="number" id="pa-VB" value="18" step="0.1"></div>
+      </div>
+      <button class="btn ghost" id="pa-iso" style="margin-top:8px;width:100%">B를 A와 같은 등온선 위로 (P<sub>B</sub> = P<sub>A</sub>V<sub>A</sub>/V<sub>B</sub>)</button>
+      <label class="ctl" style="margin-top:12px">자세히 볼 경로</label>
+      <select id="pa-sel"></select>
+      <label class="ctl"><input type="checkbox" id="pa-cyc"> 순환 과정: 선택 경로로 A→B, 아래 경로로 B→A 복귀</label>
+      <select id="pa-ret"></select>
+    </div>
+    <div>
+      <div class="card">
+        <div class="legend" id="pa-legend"></div>
+        <canvas id="pa-pv" style="height:380px"></canvas>
+      </div>
+      <div class="grid two">
+        <div class="card"><h3 style="margin-top:0">경로별 비교</h3><div id="pa-table"></div><p class="muted" id="pa-msg"></p></div>
+        <div class="card steps"><h3 style="margin-top:0">선택 경로 계산</h3><div id="pa-detail"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= -->
+<!-- ④ 전미분, Cv, Cp                                         -->
+<!-- ======================================================= -->
+<section class="tab" id="t-deriv">
+  <div class="card">
+    <h2>상태함수의 전미분과 1법칙을 연결하여 \(C_V,\ C_P\) 정의하기</h2>
+    <p class="muted">각 단계를 순서대로 열어 보세요. 중간의 확인 질문에 답해야 다음 단계가 열립니다.</p>
+    <div class="row"><button class="btn ghost" data-dv="cv">A. U(T,V) → C<sub>V</sub>, q<sub>V</sub></button><button class="btn ghost" data-dv="cp">B. H(T,P) → C<sub>P</sub>, q<sub>P</sub></button><button class="btn ghost" data-dv="cpcv">C. C<sub>P</sub> − C<sub>V</sub> = nR</button></div>
+  </div>
+  <div class="grid two">
+    <div class="card steps" id="dv-box"></div>
+    <div class="card">
+      <h2>실험: 같은 ΔT에서 \(q_V\) 와 \(q_P\) 비교</h2>
+      <p class="muted">왼쪽은 피스톤을 고정(V 일정), 오른쪽은 일정한 추(P 일정). 같은 양의 기체를 같은 ΔT만큼 가열합니다.</p>
+      <div class="row">
+        <div style="flex:1;min-width:140px"><label class="ctl">기체</label><select id="cc-gas"><option value="mono">단원자</option><option value="di">이원자</option></select></div>
+        <div style="flex:1;min-width:140px"><label class="ctl">n = <b id="cc-n-v"></b> mol</label><input type="range" id="cc-n" min="0.5" max="3" step="0.1" value="1"></div>
+        <div style="flex:1;min-width:140px"><label class="ctl">ΔT = <b id="cc-dT-v"></b> K</label><input type="range" id="cc-dT" min="10" max="300" step="5" value="100"></div>
+      </div>
+      <div class="grid two" style="margin-top:6px">
+        <div><div class="muted" style="text-align:center">V 일정 (피스톤 고정)</div><canvas id="cc-a" style="height:260px"></canvas></div>
+        <div><div class="muted" style="text-align:center">P 일정 (자유 피스톤)</div><canvas id="cc-b" style="height:260px"></canvas></div>
+      </div>
+      <div class="row"><button class="btn" id="cc-play">▶ 가열</button><button class="btn ghost" id="cc-reset">↺</button></div>
+      <div class="steps" id="cc-out" style="margin-top:8px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= -->
+<!-- ⑤ 줄-톰슨                                                -->
+<!-- ======================================================= -->
+<section class="tab" id="t-jt">
+  <div class="grid lab-grid">
+    <div class="card">
+      <h2>줄-톰슨 교축 팽창</h2>
+      <label class="ctl">기체 (반데르발스 상수)</label>
+      <select id="jt-gas"></select>
+      <label class="ctl">초기 온도 T₁ = <b id="jt-T1-v"></b> K</label>
+      <input type="range" id="jt-T1" min="60" max="1200" step="5" value="300">
+      <label class="ctl">상류 압력 P₁ = <b id="jt-P1-v"></b> bar</label>
+      <input type="range" id="jt-P1" min="5" max="200" step="1" value="100">
+      <label class="ctl">하류 압력 P₂ = <b id="jt-P2-v"></b> bar</label>
+      <input type="range" id="jt-P2" min="1" max="200" step="1" value="1">
+      <div class="row" style="margin-top:10px"><button class="btn" id="jt-play">▶ 흐름</button></div>
+      <div id="jt-out" class="steps" style="margin-top:10px"></div>
+    </div>
+    <div>
+      <div class="card"><canvas id="jt-anim" style="height:220px"></canvas></div>
+      <div class="grid two">
+        <div class="card"><h3 style="margin-top:0">\(\mu_{JT}\) 대 온도 (반데르발스 저압 근사)</h3><canvas id="jt-mu" style="height:260px"></canvas></div>
+        <div class="card"><h3 style="margin-top:0">등엔탈피선: T 대 P</h3><canvas id="jt-tp" style="height:260px"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="card steps">
+    <h2>등엔탈피임을 보이기와 \(\mu_{JT}\)</h2>
+    <div class="grid two">
+      <div>
+        <p>단열된 관에서 다공성 마개를 지나 기체 \(n\) mol이 \(P_1,V_1\)에서 \(P_2,V_2\)로 이동. \(q = 0\).</p>
+        <p>왼쪽 피스톤이 기체에 하는 일 \(+P_1V_1\), 오른쪽에서 기체가 하는 일 \(-P_2V_2\):</p>
+        $$w = P_1V_1 - P_2V_2,\qquad \Delta U = U_2 - U_1 = q + w = P_1V_1 - P_2V_2$$
+        $$U_2 + P_2V_2 = U_1 + P_1V_1 \;\Rightarrow\; H_2 = H_1 \quad(\text{등엔탈피})$$
+        <p>줄-톰슨 계수 (Joule-Thomson coefficient):</p>
+        $$\mu_{JT} \equiv \left(\frac{\partial T}{\partial P}\right)_H$$
+        <p>팽창에서 \(dP<0\) 이므로 \(\mu_{JT}>0\)이면 냉각, \(\mu_{JT}<0\)이면 가열.</p>
+      </div>
+      <div>
+        <p>\(H(T,P)\)의 전미분 \(dH = C_P\,dT + (\partial H/\partial P)_T\,dP\)에서 \(dH = 0\)으로 두면</p>
+        $$\left(\frac{\partial H}{\partial P}\right)_T = -C_P\,\mu_{JT}\qquad(\text{순환 규칙과 같은 결과})$$
+        <p>이상기체: \(H = H(T)\) → \((\partial H/\partial P)_T = 0\) → \(\mu_{JT} = 0\) (온도 변화 없음).</p>
+        <p>반데르발스 기체의 저압 근사:</p>
+        $$\mu_{JT} \approx \frac{1}{C_{P,m}}\left(\frac{2a}{RT} - b\right),\qquad T_{inv} = \frac{2a}{Rb}$$
+        <p class="muted">인력(a) 항이 우세한 저온에서는 냉각, 반발(b) 항이 우세한 고온에서는 가열. 이 근사식의 역전온도는 실측보다 큽니다 (예: N₂ 실측 약 621 K).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= -->
+<!-- ⑥ 연습문제                                               -->
+<!-- ======================================================= -->
+<section class="tab" id="t-quiz">
+  <div class="card">
+    <h2>연습문제 (무작위 출제)</h2>
+    <div class="row">
+      <select id="qz-type" style="max-width:260px"></select>
+      <button class="btn" id="qz-new">새 문제</button>
+      <span class="muted" id="qz-score"></span>
+    </div>
+  </div>
+  <div class="grid two">
+    <div class="card">
+      <div id="qz-text" style="font-size:16px"></div>
+      <p class="muted">R = 8.314 J mol⁻¹ K⁻¹, 1 L·bar = 100 J. 답은 J 단위, 부호 포함 (허용오차 ±2%).</p>
+      <div class="check-grid">
+        <div><label class="ctl">q (J)</label><input type="number" id="qz-q"><div class="fb" id="qf-q"></div></div>
+        <div><label class="ctl">w (J)</label><input type="number" id="qz-w"><div class="fb" id="qf-w"></div></div>
+        <div><label class="ctl">ΔU (J)</label><input type="number" id="qz-dU"><div class="fb" id="qf-dU"></div></div>
+        <div><label class="ctl">ΔH (J)</label><input type="number" id="qz-dH"><div class="fb" id="qf-dH"></div></div>
+      </div>
+      <div class="row" style="margin-top:8px"><button class="btn" id="qz-go">채점</button><button class="btn ghost" id="qz-show">풀이 보기</button><button class="btn ghost" id="qz-lab">실험실에서 보기</button></div>
+    </div>
+    <div class="card steps"><h3 style="margin-top:0">풀이</h3><div id="qz-sol" class="muted">채점 후 또는 '풀이 보기'를 누르면 표시됩니다.</div></div>
+  </div>
+</section>
+</main>
+<footer>thermo-1A · 작성자: 강원대학교 식품공정공학연구실 윤원병 · 참고: Ball, <i>Physical Chemistry</i> Ch. 2 (The First Law of Thermodynamics)</footer>
+
+<script>
+/* =====================================================================
+   0. 공통 상수와 도우미 함수
+   ===================================================================== */
+const R  = 8.314;     // J/(mol·K)
+const RL = 0.08314;   // L·bar/(mol·K)
+const LB = 100;       // 1 L·bar = 100 J
+const GAS = { mono:{Cvm:1.5*R, label:'단원자'}, di:{Cvm:2.5*R, label:'이원자'} };
+const MACROS = {"\\dbar":"{\\text{đ}}"};
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+// KaTeX 렌더링 (display=true 이면 가운데 정렬 블록)
+function tex(s, display=true){
+  return katex.renderToString(s,{displayMode:display,throwOnError:false,strict:false,macros:MACROS});
+}
+// 문자열 속 \( ... \) 를 인라인 수식으로 변환
+function md(s){ return s.replace(/\\\((.+?)\\\)/g,(m,a)=>tex(a,false)); }
+// 숫자 형식
+const nf = (x,d=2)=> (Math.abs(x)<1e-9?0:x).toFixed(d);
+const sg = x => (x>0?'+':'') ;                         // 양수에 + 붙이기
+const pr = (x,d=2)=> x<0 ? `(${nf(x,d)})` : nf(x,d);   // 음수면 괄호
+function J(x){ if(Math.abs(x)<0.5) return '0'; return Math.round(x).toString(); }   // J 정수
+function Jtxt(x){ if(Math.abs(x)<0.5) return '0 J'; const a=Math.abs(x); const s=x<0?'−':'+'; return a>=10000? s+(a/1000).toFixed(2)+' kJ' : s+Math.round(a)+' J'; }
+const tJ = x => J(x)+'\\ \\text{J}';
+
+// 캔버스를 화면 크기(고해상도 포함)에 맞추기
+function fit(cv){
+  const dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+  const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx,W:w,H:h};
+}
+// 온도 → 색 (저온 파랑 ~ 고온 빨강)
+function tColor(T,a=1){ const t=Math.max(0,Math.min(1,(T-120)/800)); return `hsla(${230-230*t},80%,${48+4*t}%,${a})`; }
+function niceStep(r,n=5){ const raw=r/n, p=Math.pow(10,Math.floor(Math.log10(raw))), m=raw/p; return (m<1.5?1:m<3?2:m<7?5:10)*p; }
+
+/* ---------------------------------------------------------------------
+   범용 2차원 그래프 그리기 (P-V 선도, μ-T, T-P 그래프에 공통 사용)
+   spec = {xr:[,], yr:[,], xlabel, ylabel, fills:[{pts,color}], lines:[{pts,color,width,dash}],
+           points:[{x,y,color,label,hollow}], texts:[{x,y,text,color,align}]}
+   --------------------------------------------------------------------- */
+function plot(cv, sp){
+  const {ctx,W,H}=fit(cv);
+  const L=54,Rm=14,T=16,B=42, pw=W-L-Rm, ph=H-T-B;
+  const X=x=>L+(x-sp.xr[0])/(sp.xr[1]-sp.xr[0])*pw;
+  const Y=y=>T+ph-(y-sp.yr[0])/(sp.yr[1]-sp.yr[0])*ph;
+  ctx.clearRect(0,0,W,H);
+  ctx.font='12px "Noto Sans KR",sans-serif'; ctx.lineWidth=1;
+  // 격자와 눈금
+  const sx=niceStep(sp.xr[1]-sp.xr[0]), sy=niceStep(sp.yr[1]-sp.yr[0]);
+  ctx.strokeStyle='#eceff4'; ctx.fillStyle='#5b6475'; ctx.textAlign='center';
+  for(let x=Math.ceil(sp.xr[0]/sx)*sx; x<=sp.xr[1]+1e-9; x+=sx){ ctx.beginPath();ctx.moveTo(X(x),T);ctx.lineTo(X(x),T+ph);ctx.stroke(); ctx.fillText(+x.toFixed(6),X(x),T+ph+15); }
+  ctx.textAlign='right';
+  for(let y=Math.ceil(sp.yr[0]/sy)*sy; y<=sp.yr[1]+1e-9; y+=sy){ ctx.beginPath();ctx.moveTo(L,Y(y));ctx.lineTo(L+pw,Y(y));ctx.stroke(); ctx.fillText(+y.toFixed(6),L-5,Y(y)+4); }
+  ctx.strokeStyle='#8a93a6'; ctx.strokeRect(L,T,pw,ph);
+  if(sp.zeroY){ ctx.strokeStyle='#8a93a6'; ctx.beginPath(); ctx.moveTo(L,Y(0)); ctx.lineTo(L+pw,Y(0)); ctx.stroke(); }
+  ctx.fillStyle='#1c2230'; ctx.textAlign='center'; ctx.fillText(sp.xlabel||'',L+pw/2,H-6);
+  ctx.save(); ctx.translate(13,T+ph/2); ctx.rotate(-Math.PI/2); ctx.fillText(sp.ylabel||'',0,0); ctx.restore();
+  // 데이터 (영역 밖은 잘라냄)
+  ctx.save(); ctx.beginPath(); ctx.rect(L,T,pw,ph); ctx.clip();
+  for(const f of sp.fills||[]){ if(f.pts.length<3)continue; ctx.fillStyle=f.color; ctx.beginPath(); f.pts.forEach((p,i)=>i?ctx.lineTo(X(p[0]),Y(p[1])):ctx.moveTo(X(p[0]),Y(p[1]))); ctx.closePath(); ctx.fill(); }
+  for(const l of sp.lines||[]){ if(l.pts.length<2)continue; ctx.strokeStyle=l.color; ctx.lineWidth=l.width||2; ctx.setLineDash(l.dash||[]); ctx.beginPath(); l.pts.forEach((p,i)=>i?ctx.lineTo(X(p[0]),Y(p[1])):ctx.moveTo(X(p[0]),Y(p[1]))); ctx.stroke(); if(l.arrow){ const n=l.pts.length, a=l.pts[n-2], b=l.pts[n-1]; arrowHead(ctx,X(a[0]),Y(a[1]),X(b[0]),Y(b[1]),l.color);} }
+  ctx.setLineDash([]); ctx.restore();
+  for(const p of sp.points||[]){ ctx.beginPath(); ctx.arc(X(p.x),Y(p.y),p.r||5,0,7); if(p.hollow){ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle=p.color;ctx.lineWidth=2;ctx.stroke();} else {ctx.fillStyle=p.color;ctx.fill();}
+    if(p.label){ ctx.fillStyle='#1c2230'; ctx.font='bold 13px sans-serif'; ctx.textAlign='left'; ctx.fillText(p.label,X(p.x)+7,Y(p.y)-7); ctx.font='12px "Noto Sans KR",sans-serif'; } }
+  for(const t of sp.texts||[]){ ctx.fillStyle=t.color||'#1c2230'; ctx.textAlign=t.align||'left'; ctx.font=(t.bold?'bold ':'')+'12.5px "Noto Sans KR",sans-serif'; ctx.fillText(t.text, t.px?t.x:X(t.x), t.px?t.y:Y(t.y)); }
+  return {X,Y};
+}
+function arrowHead(ctx,x1,y1,x2,y2,c,s=9){ const a=Math.atan2(y2-y1,x2-x1); ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x2-s*Math.cos(a-0.45),y2-s*Math.sin(a-0.45)); ctx.lineTo(x2-s*Math.cos(a+0.45),y2-s*Math.sin(a+0.45)); ctx.fill(); }
+function arrow(ctx,x1,y1,x2,y2,c,w=3){ ctx.strokeStyle=c; ctx.lineWidth=w; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); arrowHead(ctx,x1,y1,x2,y2,c,10); }
+
+/* =====================================================================
+   1. 실린더-피스톤 그림 (기체 입자 애니메이션 포함)
+   ===================================================================== */
+class Cyl{
+  constructor(cv,N=70){ this.cv=cv; this.N=N; this.reset(0.5); }
+  reset(bound){ this.p=[]; for(let i=0;i<this.N;i++) this.p.push({x:Math.random(),y:Math.random()*bound*0.98,a:Math.random()*6.283}); }
+  // 입자 이동: 속력 ∝ √T, bound = 기체가 차지할 수 있는 높이(0~1)
+  step(dt,T,bound){
+    const sp=0.32*Math.sqrt(T/300);
+    for(const q of this.p){
+      q.x+=Math.cos(q.a)*sp*dt; q.y+=Math.sin(q.a)*sp*dt*0.8;
+      if(q.x<0){q.x=-q.x;q.a=Math.PI-q.a;} if(q.x>1){q.x=2-q.x;q.a=Math.PI-q.a;}
+      if(q.y<0){q.y=-q.y;q.a=-q.a;}
+      if(q.y>bound){ q.y=2*bound-q.y; if(q.y>bound||q.y<0) q.y=bound*Math.random(); q.a=-Math.abs(q.a); }
+    }
+  }
+  /* o = { bound, T, mode:'iso'|'adia'|'heat', heat:-1|0|1, work:-1|0|1,
+           weight:{type:'sand'|'block'|'pin'|'none', text, level}, wall (자유팽창 고정벽), partition, showT, bathText } */
+  draw(o){
+    const {ctx,W,H}=fit(this.cv); ctx.clearRect(0,0,W,H);
+    const cw=Math.min(W*0.5,200), x0=(W-cw)/2, x1=x0+cw, yb=H-64, ytop=62, Hin=yb-ytop;
+    const yOf=f=>yb-f*Hin;
+    // 단열벽(빗금)
+    if(o.mode==='adia'){
+      ctx.fillStyle='#fff1d6'; ctx.fillRect(x0-14,ytop-10,14,Hin+24); ctx.fillRect(x1,ytop-10,14,Hin+24); ctx.fillRect(x0-14,yb,cw+28,14);
+      ctx.strokeStyle='#e0a84a'; ctx.lineWidth=1;
+      for(let y=ytop-10;y<yb+14;y+=7){ ctx.beginPath();ctx.moveTo(x0-14,y);ctx.lineTo(x0,y+7);ctx.stroke(); ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x1+14,y+7);ctx.stroke(); }
+      ctx.fillStyle='#a5701a'; ctx.font='12px "Noto Sans KR",sans-serif'; ctx.textAlign='center'; ctx.fillText('단열벽 (q = 0)',W/2,yb+32);
+    }
+    // 아래쪽 열원/열저장조
+    if(o.mode==='iso'||o.mode==='heat'){
+      const iso=o.mode==='iso';
+      ctx.fillStyle= iso?'#dbe9ff':(o.heat>0?'#ffe1d6':o.heat<0?'#d6ecff':'#eef0f4');
+      ctx.fillRect(x0-30,yb+4,cw+60,30); ctx.strokeStyle='#9aa3b5'; ctx.strokeRect(x0-30,yb+4,cw+60,30);
+      ctx.fillStyle='#1c2230'; ctx.font='12px "Noto Sans KR",sans-serif'; ctx.textAlign='center';
+      ctx.fillText(o.bathText|| (iso?'열저장조':'가열/냉각기'), W/2, yb+24);
+      if(o.heat){ const c=o.heat>0?'#d9480f':'#1971c2';
+        for(const fx of [0.25,0.5,0.75]){ const x=x0+cw*fx; if(o.heat>0) arrow(ctx,x,yb+2,x,yb-30,c); else arrow(ctx,x,yb-30,x,yb+2,c); }
+        ctx.fillStyle=c; ctx.font='bold 13px sans-serif'; ctx.textAlign='left'; ctx.fillText(o.heat>0?'q > 0':'q < 0', x1+18, yb-10);
+      }
+    }
+    // 실린더 벽
+    ctx.strokeStyle='#3d4558'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(x0,ytop-10); ctx.lineTo(x0,yb); ctx.lineTo(x1,yb); ctx.lineTo(x1,ytop-10); ctx.stroke();
+    // 기체 영역
+    const gTop=yOf(o.bound);
+    ctx.fillStyle=tColor(o.T,0.12); ctx.fillRect(x0+1.5,gTop,cw-3,yb-gTop-1.5);
+    // 자유팽창: 진공 영역과 칸막이, 위쪽 고정벽
+    if(o.wall!=null){
+      const yw=yOf(o.wall);
+      ctx.fillStyle='#3d4558'; ctx.fillRect(x0,yw-8,cw,8);
+      if(o.partition!=null){ const yp=yOf(o.partition); ctx.fillStyle='#f3f4f7'; ctx.fillRect(x0+1.5,yw,cw-3,yp-yw);
+        ctx.fillStyle='#8a93a6'; ctx.font='13px "Noto Sans KR",sans-serif'; ctx.textAlign='center'; ctx.fillText('진공',W/2,(yw+yp)/2+4);
+        ctx.strokeStyle='#c92a2a'; ctx.lineWidth=3; ctx.setLineDash([6,4]); ctx.beginPath(); ctx.moveTo(x0,yp); ctx.lineTo(x1,yp); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle='#c92a2a'; ctx.font='11px sans-serif'; ctx.textAlign='left'; ctx.fillText('칸막이',x1+6,yp+4);
+      }
+    }
+    // 입자
+    for(const q of this.p){ const px=x0+4+q.x*(cw-8), py=yb-3-q.y*(Hin-3); if(py<gTop) continue; ctx.fillStyle=tColor(o.T); ctx.beginPath(); ctx.arc(px,py,3.2,0,7); ctx.fill(); }
+    if(o.showT!==false){ ctx.fillStyle='#1c2230'; ctx.font='bold 13px sans-serif'; ctx.textAlign='left'; ctx.fillText('T = '+o.T.toFixed(0)+' K', x0+8, yb-10); }
+    // 피스톤
+    if(o.wall==null){
+      ctx.fillStyle='#8a93a6'; ctx.fillRect(x0+2,gTop-12,cw-4,12); ctx.fillStyle='#6b7385'; ctx.fillRect(W/2-5,gTop-34,10,22);
+      const w=o.weight||{type:'none'};
+      if(w.type==='block'){ ctx.fillStyle='#495266'; ctx.fillRect(W/2-45,gTop-58,90,24); ctx.fillStyle='#fff'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center'; ctx.fillText(w.text||'',W/2,gTop-41); }
+      if(w.type==='sand'){ const k=Math.round(4+60*Math.max(0,Math.min(1,w.level))); ctx.fillStyle='#c9a227';
+        for(let i=0;i<k;i++){ const row=Math.floor(i/12), col=i%12; ctx.beginPath(); ctx.arc(W/2-33+col*6+(row%2)*3, gTop-38-row*5,2.6,0,7); ctx.fill(); }
+        ctx.fillStyle='#7a6212'; ctx.font='11px "Noto Sans KR",sans-serif'; ctx.textAlign='center'; ctx.fillText('모래알(무한소씩 조절)',W/2,gTop-38-Math.ceil(k/12)*5-6); }
+      if(w.type==='pin'){ ctx.fillStyle='#c92a2a'; ctx.fillRect(x0-12,gTop-16,16,5); ctx.fillRect(x1-4,gTop-16,16,5); ctx.fillRect(x0-12,gTop+1,16,5); ctx.fillRect(x1-4,gTop+1,16,5);
+        ctx.font='11px "Noto Sans KR",sans-serif'; ctx.textAlign='center'; ctx.fillText('고정핀 (V 일정)',W/2,gTop-40); }
+      if(o.work){ const c='#2b8a3e', ax=x1+26; if(o.work>0) arrow(ctx,ax,gTop+20,ax,gTop-30,c); else arrow(ctx,ax,gTop-30,ax,gTop+20,c);
+        ctx.fillStyle=c; ctx.font='bold 12px sans-serif'; ctx.textAlign='left';
+        ctx.fillText(o.work>0?'팽창: w < 0':'압축: w > 0',Math.min(ax+8,W-90),gTop-34); }
+    }
+  }
+}
+
+/* =====================================================================
+   2. 과정 계산 엔진 (이상기체)
+   c = {n, Cvm, Cpm, g, T1, P1, V1, p(과정 변수)}
+   반환: 진행도 s(0~1)에서의 상태와 누적 q, w, ΔU, ΔH
+   ===================================================================== */
+const PROC = {
+  iso_rev:  {name:'등온 가역', full:'등온 가역 팽창/압축', par:{l:'V₂/V₁',min:0.25,max:4,step:0.05,def:2.5,u:''},
+             desc:'열저장조와 접촉한 채, 피스톤 위의 모래알을 하나씩 덜어(더해) 매 순간 P<sub>ext</sub> = P 를 유지합니다.'},
+  iso_irr:  {name:'등온 비가역', full:'등온 비가역 (일정 외부압력)', par:{l:'P<sub>ext</sub> (bar)',min:0.2,max:10,step:0.1,def:1,u:' bar'},
+             desc:'일정한 외부압력 P<sub>ext</sub>에 대해 한 번에 팽창(압축)하여 P = P<sub>ext</sub>에서 평형에 도달합니다. 온도는 열저장조로 일정.'},
+  free:     {name:'자유 팽창', full:'자유 팽창 (진공으로, 줄 실험)', par:{l:'V₂/V₁',min:1.1,max:4,step:0.05,def:2,u:''},
+             desc:'칸막이를 제거하면 기체가 진공으로 퍼집니다. P<sub>ext</sub> = 0 이므로 w = 0, 순간적이어서 q = 0.'},
+  isochoric:{name:'등적 가열/냉각', full:'등적 과정 (V 일정)', par:{l:'T₂ (K)',min:100,max:1000,step:5,def:450,u:' K'},
+             desc:'피스톤을 핀으로 고정하고 가열(냉각)합니다. 일은 0이므로 공급한 열이 모두 내부에너지가 됩니다: q<sub>V</sub> = ΔU.'},
+  isobaric: {name:'등압 가열/냉각', full:'등압 과정 (P 일정)', par:{l:'T₂ (K)',min:100,max:1000,step:5,def:450,u:' K'},
+             desc:'일정한 추를 올린 피스톤이 자유롭게 움직이며 천천히 가열(냉각)합니다: q<sub>P</sub> = ΔH.'},
+  adia_rev: {name:'단열 가역', full:'단열 가역 팽창/압축', par:{l:'V₂/V₁',min:0.25,max:4,step:0.05,def:2,u:''},
+             desc:'단열벽 안에서 모래알을 조금씩 조절. q = 0 이므로 w = ΔU, 팽창하면 냉각됩니다 (PV<sup>γ</sup> = 일정).'},
+  adia_irr: {name:'단열 비가역', full:'단열 비가역 (일정 외부압력)', par:{l:'P<sub>ext</sub> (bar)',min:0.2,max:10,step:0.1,def:1,u:' bar'},
+             desc:'단열벽 안에서 일정한 외부압력에 대해 한 번에 팽창(압축). q = 0 이고 ΔU = w = −P<sub>ext</sub>ΔV.'}
+};
+function gasCtx(gas,n,T1,P1,p){ const Cvm=GAS[gas].Cvm, Cpm=Cvm+R; return {gas,n,Cvm,Cpm,g:Cpm/Cvm,T1,P1,V1:n*RL*T1/P1,p}; }
+function process(key,c){
+  const {n,Cvm,Cpm,g,T1,P1,V1,p}=c;
+  let V2,T2,Pext=null,V,T,w,rev=true;
+  switch(key){
+    case 'iso_rev':  V2=V1*p; T2=T1; V=s=>V1*Math.pow(p,s); T=()=>T1; w=s=>-n*R*T1*Math.log(V(s)/V1); break;
+    case 'iso_irr':  rev=false; Pext=p; T2=T1; V2=n*RL*T1/Pext; V=s=>V1+(V2-V1)*s; T=()=>T1; w=s=>-Pext*(V(s)-V1)*LB; break;
+    case 'free':     rev=false; Pext=0; V2=V1*p; T2=T1; V=s=>V1+(V2-V1)*s; T=()=>T1; w=()=>0; break;
+    case 'isochoric':T2=p; V2=V1; V=()=>V1; T=s=>T1+(T2-T1)*s; w=()=>0; break;
+    case 'isobaric': Pext=P1; T2=p; V2=n*RL*T2/P1; T=s=>T1+(T2-T1)*s; V=s=>n*RL*T(s)/P1; w=s=>-P1*(V(s)-V1)*LB; break;
+    case 'adia_rev': V2=V1*p; V=s=>V1*Math.pow(p,s); T=s=>T1*Math.pow(V1/V(s),g-1); T2=T(1); w=s=>n*Cvm*(T(s)-T1); break;
+    case 'adia_irr': rev=false; Pext=p; T2=(Cvm*T1+Pext*V1*LB/n)/Cpm; V2=n*RL*T2/Pext;
+                     V=s=>V1+(V2-V1)*s; w=s=>-Pext*(V(s)-V1)*LB; T=s=>T1+w(s)/(n*Cvm); break;
+  }
+  const P2=n*RL*T2/V2;
+  const at=s=>{ const Ts=T(s),Vs=V(s),ws=w(s),dU=n*Cvm*(Ts-T1); return {V:Vs,T:Ts,P:n*RL*Ts/Vs,w:ws,dU,dH:n*Cpm*(Ts-T1),q:dU-ws}; };
+  return {key,rev,Pext,c,V1,T1,P1,V2,T2,P2,V,T,at,fin:at(1)};
+}
+
+// 과정별 풀이 (KaTeX 문자열 배열)
+function solutionTeX(P){
+  const {c,fin:f,V1,V2,T1,T2,P1,P2,Pext}=P, {n,Cvm,Cpm}=c, dT=T2-T1, Rc=(R/Cvm);
+  const cv=`C_{V,m}=${nf(Cvm,2)}`, cp=`C_{P,m}=C_{V,m}+R=${nf(Cpm,2)}`;
+  const head=`n=${nf(n,2)}\\ \\text{mol},\\ T_1=${nf(T1,1)}\\ \\text{K},\\ P_1=${nf(P1,2)}\\ \\text{bar},\\ V_1=\\frac{nRT_1}{P_1}=${nf(V1,3)}\\ \\text{L}`;
+  const L=[head, `${cv},\\quad ${cp}\\ \\ (\\text{J mol}^{-1}\\text{K}^{-1})`];
+  switch(P.key){
+  case 'iso_rev':
+    L.push(`V_2 = ${nf(V2,3)}\\ \\text{L},\\quad \\Delta T = 0 \\Rightarrow \\Delta U = nC_{V,m}\\Delta T = 0,\\ \\ \\Delta H = nC_{P,m}\\Delta T = 0`,
+      `w = -\\int_{V_1}^{V_2}P\\,dV = -nRT\\ln\\frac{V_2}{V_1} = -(${nf(n,2)})(8.314)(${nf(T1,1)})\\ln\\frac{${nf(V2,3)}}{${nf(V1,3)}} = ${tJ(f.w)}`,
+      `q = \\Delta U - w = 0 - ${pr(Math.round(f.w),0)} = ${tJ(f.q)}`,
+      `P_2 = P_1\\frac{V_1}{V_2} = ${nf(P2,3)}\\ \\text{bar}`); break;
+  case 'iso_irr':
+    L.push(`V_2 = \\frac{nRT}{P_{ext}} = \\frac{(${nf(n,2)})(0.08314)(${nf(T1,1)})}{${nf(Pext,2)}} = ${nf(V2,3)}\\ \\text{L}`,
+      `w = -P_{ext}\\Delta V = -(${nf(Pext,2)}\\ \\text{bar})(${pr(V2-V1,3)}\\ \\text{L})\\times 100\\ \\tfrac{\\text{J}}{\\text{L bar}} = ${tJ(f.w)}`,
+      `\\Delta U = 0,\\ \\ \\Delta H = 0\\quad(\\text{이상기체, 등온})`,
+      `q = \\Delta U - w = ${tJ(f.q)}`);
+    { const wr=-n*R*T1*Math.log(V2/V1); L.push(`\\text{비교: 같은 상태변화의 가역 경로 } w_{rev} = -nRT\\ln\\frac{V_2}{V_1} = ${tJ(wr)}`); } break;
+  case 'free':
+    L.push(`P_{ext}=0 \\Rightarrow w = -P_{ext}\\Delta V = 0`, `\\text{순간적·단열} \\Rightarrow q = 0`,
+      `\\Delta U = q + w = 0 \\Rightarrow \\Delta T = 0\\ \\ (\\text{이상기체: } U = U(T))`,
+      `\\Delta H = \\Delta U + \\Delta(PV) = 0 + nR\\Delta T = 0`,
+      `P_2 = P_1\\frac{V_1}{V_2} = ${nf(P2,3)}\\ \\text{bar}`); break;
+  case 'isochoric':
+    L.push(`dV = 0 \\Rightarrow w = 0`,
+      `q_V = \\Delta U = nC_{V,m}\\Delta T = (${nf(n,2)})(${nf(Cvm,2)})(${pr(dT,1)}) = ${tJ(f.dU)}`,
+      `\\Delta H = nC_{P,m}\\Delta T = (${nf(n,2)})(${nf(Cpm,2)})(${pr(dT,1)}) = ${tJ(f.dH)}`,
+      `\\text{확인: } \\Delta H = \\Delta U + V\\Delta P = \\Delta U + nR\\Delta T`,
+      `P_2 = P_1\\frac{T_2}{T_1} = ${nf(P2,3)}\\ \\text{bar}`); break;
+  case 'isobaric':
+    L.push(`q_P = \\Delta H = nC_{P,m}\\Delta T = (${nf(n,2)})(${nf(Cpm,2)})(${pr(dT,1)}) = ${tJ(f.dH)}`,
+      `w = -P\\Delta V = -nR\\Delta T = -(${nf(n,2)})(8.314)(${pr(dT,1)}) = ${tJ(f.w)}`,
+      `\\Delta U = q + w = nC_{V,m}\\Delta T = ${tJ(f.dU)}`,
+      `V_2 = V_1\\frac{T_2}{T_1} = ${nf(V2,3)}\\ \\text{L}`); break;
+  case 'adia_rev':
+    L.push(`q = 0,\\qquad T_2 = T_1\\left(\\frac{V_1}{V_2}\\right)^{R/C_{V,m}} = ${nf(T1,1)}\\left(\\frac{${nf(V1,3)}}{${nf(V2,3)}}\\right)^{${nf(Rc,3)}} = ${nf(T2,1)}\\ \\text{K}`,
+      `w = \\Delta U = nC_{V,m}(T_2-T_1) = (${nf(n,2)})(${nf(Cvm,2)})(${pr(dT,1)}) = ${tJ(f.w)}`,
+      `\\Delta H = nC_{P,m}\\Delta T = ${tJ(f.dH)}`,
+      `P_2 = P_1\\left(\\frac{V_1}{V_2}\\right)^{\\gamma} = ${nf(P2,3)}\\ \\text{bar}\\quad(\\gamma=${nf(c.g,3)})`); break;
+  case 'adia_irr':
+    L.push(`q = 0 \\Rightarrow \\Delta U = w:\\quad nC_{V,m}(T_2-T_1) = -P_{ext}(V_2-V_1),\\quad V_2 = \\frac{nRT_2}{P_{ext}}`,
+      `T_2 = \\frac{C_{V,m}T_1 + P_{ext}V_1/n}{C_{P,m}} = \\frac{(${nf(Cvm,2)})(${nf(T1,1)}) + ${nf(Pext*V1*LB/n,1)}}{${nf(Cpm,2)}} = ${nf(T2,1)}\\ \\text{K}`,
+      `\\quad(P_{ext}V_1\\ \\text{는 J 단위: } \\text{L bar}\\times 100)`,
+      `w = \\Delta U = nC_{V,m}\\Delta T = ${tJ(f.w)},\\quad V_2 = ${nf(V2,3)}\\ \\text{L}`,
+      `\\Delta H = nC_{P,m}\\Delta T = ${tJ(f.dH)}`); break;
+  }
+  L.push(`\\textbf{결과: } q=${tJ(f.q)},\\ w=${tJ(f.w)},\\ \\Delta U=${tJ(f.dU)},\\ \\Delta H=${tJ(f.dH)}`);
+  return L;
+}
+
+// 에너지 막대 그리기
+function bars(el, v, hide, scale){
+  const rows=[['q',v.q,'var(--q)'],['w',v.w,'var(--w)'],['ΔU',v.dU,'var(--u)'],['ΔH',v.dH,'var(--h)']];
+  const m=scale||Math.max(1,...rows.map(r=>Math.abs(r[1])));
+  el.innerHTML=rows.map(([k,x,c])=>{ const f=Math.min(1,Math.abs(x)/m)*50;
+    return `<div class="bar"><b style="color:${c}">${k}</b><div class="track">${hide?'':`<div class="fill" style="background:${c};${x>=0?`left:50%;width:${f}%`:`left:${50-f}%;width:${f}%`}"></div>`}</div><span class="val">${hide?'?':Jtxt(x)}</span></div>`; }).join('')
+    +`<div class="muted" style="display:flex;justify-content:space-between;padding:0 110px 0 78px"><span>− (계에서 나감)</span><span>(계로 들어옴) +</span></div>`;
+}
+
+/* =====================================================================
+   3. ② 과정 실험실
+   ===================================================================== */
+const lab={key:'iso_rev',s:0,playing:false,params:{},cyl:null,P:null,dirty:true,shownSol:false};
+for(const k in PROC) lab.params[k]=PROC[k].par.def;
+
+function labBuild(){
+  $('#proc-list').innerHTML=Object.entries(PROC).map(([k,v])=>`<button data-k="${k}">${v.name}</button>`).join('');
+  $$('#proc-list button').forEach(b=>b.onclick=()=>{ lab.key=b.dataset.k; labSetPar(); labReset(); });
+  ['lab-gas','lab-n','lab-T1','lab-P1'].forEach(id=>$('#'+id).oninput=()=>labReset());
+  $('#lab-par').oninput=()=>{ lab.params[lab.key]=+$('#lab-par').value; labReset(); };
+  $('#lab-play').onclick=()=>{ if(lab.s>=1) lab.s=0; lab.playing=!lab.playing; };
+  $('#lab-reset').onclick=()=>labReset();
+  $('#lab-s').oninput=()=>{ lab.s=+$('#lab-s').value; lab.playing=false; lab.dirty=true; };
+  ['lab-eng','lab-ovl'].forEach(id=>$('#'+id).onchange=()=>lab.dirty=true);
+  $('#lab-hide').onchange=()=>{ lab.shownSol=false; clearChecks(); lab.dirty=true; };
+  $('#ck-go').onclick=labCheck;
+  $('#ck-show').onclick=()=>{ lab.shownSol=true; lab.dirty=true; };
+  lab.cyl=new Cyl($('#lab-cyl'));
+  labSetPar(); labReset();
+}
+function labSetPar(){
+  const p=PROC[lab.key].par, el=$('#lab-par');
+  el.min=p.min; el.max=p.max; el.step=p.step; el.value=lab.params[lab.key];
+  $$('#proc-list button').forEach(b=>b.classList.toggle('on',b.dataset.k===lab.key));
+}
+function clearChecks(){ ['q','w','dU','dH'].forEach(k=>{ $('#ck-'+k).value=''; $('#fb-'+k).innerHTML=''; }); }
+function labReset(){
+  lab.s=0; lab.playing=false; lab.shownSol=false; clearChecks();
+  const g=$('#lab-gas').value, n=+$('#lab-n').value, T1=+$('#lab-T1').value, P1=+$('#lab-P1').value;
+  $('#lab-n-v').textContent=n.toFixed(1); $('#lab-T1-v').textContent=T1; $('#lab-P1-v').textContent=P1.toFixed(1);
+  lab.P=process(lab.key, gasCtx(g,n,T1,P1,lab.params[lab.key]));
+  const P=lab.P, Vd=Math.max(P.V1,P.V2)*1.12;
+  lab.Vd=Vd; lab.cyl.reset(P.V1/Vd);
+  $('#lab-par-l').innerHTML=`${PROC[lab.key].par.l} = <b>${(+lab.params[lab.key]).toFixed(2)}${PROC[lab.key].par.u}</b>`;
+  $('#lab-title').innerHTML=PROC[lab.key].full;
+  $('#lab-desc').innerHTML=PROC[lab.key].desc;
+  $('#lab-ovl-wrap').style.display= lab.key==='iso_irr'?'block':'none';
+  lab.dirty=true;
+}
+function labFrame(dt){
+  const P=lab.P; if(!P) return;
+  if(lab.playing){ lab.s=Math.min(1,lab.s+dt/3.5); if(lab.s>=1) lab.playing=false; lab.dirty=true; }
+  const s=lab.s, st=P.at(s), hide=$('#lab-hide').checked;
+  // 실린더
+  const key=P.key, moving=lab.playing&&s<1;
+  let bound=st.V/lab.Vd, wall=null, partition=null;
+  if(key==='free'){ wall=P.V2/lab.Vd; bound= s>0? wall : P.V1/lab.Vd; partition= s>0? null : P.V1/lab.Vd; }
+  lab.cyl.step(dt,st.T,bound);
+  const mode= (key==='iso_rev'||key==='iso_irr')?'iso': (key==='isochoric'||key==='isobaric')?'heat':'adia';
+  const qs=P.fin.q, heat= (mode==='adia')?0 : (moving? Math.sign(Math.round(qs)) : 0);
+  const work= (moving && key!=='free' && key!=='isochoric') ? Math.sign(P.V2-P.V1) : 0;
+  let weight={type:'none'};
+  if(key==='iso_rev'||key==='adia_rev') weight={type:'sand',level:st.P/Math.max(P.P1,P.P2)};
+  if(key==='iso_irr'||key==='adia_irr') weight={type:'block',text:`P_ext = ${P.Pext.toFixed(2)} bar`};
+  if(key==='isobaric') weight={type:'block',text:`P = ${P.P1.toFixed(2)} bar`};
+  if(key==='isochoric') weight={type:'pin'};
+  lab.cyl.draw({bound,T:st.T,mode,heat,work,weight,wall,partition,showT:!(hide&&s>0&&!lab.shownSol),
+    bathText: mode==='iso'?`열저장조 T = ${P.T1.toFixed(0)} K`: (P.T2>P.T1?'가열기':'냉각기')});
+  if(!lab.dirty) return; lab.dirty=false;
+  $('#lab-s').value=s; $('#lab-s-v').textContent=(s*100).toFixed(0)+' %';
+  $('#lab-play').textContent= lab.playing?'⏸ 일시정지':'▶ 진행';
+  labPV(P,s);
+  const reveal=!hide||lab.shownSol;
+  bars($('#lab-bars'), st, !reveal, Math.max(1,...['q','w','dU','dH'].map(k=>Math.abs(P.fin[k]))));
+  // 공학 부호
+  const eb=$('#lab-eng-box');
+  if($('#lab-eng').checked){ eb.style.display='block';
+    eb.innerHTML= reveal? md(`공학 규약: \\(Q = q = ${Jtxt(st.q).replace('−','-')}\\), \\(W = -w = ${Jtxt(-st.w).replace('−','-')}\\) (계가 <b>한</b> 일), \\(\\Delta U = Q - W = ${Jtxt(st.dU).replace('−','-')}\\)`) : '학습 모드에서는 숨겨집니다.';
+  } else eb.style.display='none';
+  // 상태 표
+  const r2=v=>reveal||s===0?v:'?';
+  $('#lab-states').innerHTML=`<table><tr><th></th><th>P (bar)</th><th>V (L)</th><th>T (K)</th></tr>
+    <tr><td>상태 1</td><td>${nf(P.P1,3)}</td><td>${nf(P.V1,3)}</td><td>${nf(P.T1,1)}</td></tr>
+    <tr><td>상태 2</td><td>${r2(nf(P.P2,3))}</td><td>${r2(nf(P.V2,3))}</td><td>${r2(nf(P.T2,1))}</td></tr></table>
+    <p class="muted">${P.rev?'가역 경로: 매 순간 P<sub>ext</sub> = P':'비가역: 중간 상태의 P는 정의되지 않음 (P–V 선도의 점선)'}</p>`;
+  // 풀이
+  $('#lab-check').style.display= hide?'block':'none';
+  $('#lab-steps').innerHTML= reveal? solutionTeX(P).map(l=>tex(l)).join('') : '<p class="muted">직접 계산한 뒤 채점하거나 \'풀이 보기\'를 누르세요.</p>';
+}
+function labPV(P,s){
+  const {c,V1,V2,P1,P2}=P, n=c.n;
+  const Vmax=Math.max(V1,V2)*1.3, Pmax=Math.max(P1,P2,P.Pext||0)*1.3;
+  const sp={xr:[0,Vmax],yr:[0,Pmax],xlabel:'V (L)',ylabel:'P (bar)',lines:[],fills:[],points:[],texts:[]};
+  const iso=T=>{ const a=[]; for(let i=1;i<=120;i++){ const V=Vmax*i/120; a.push([V,n*RL*T/V]); } return a; };
+  sp.lines.push({pts:iso(P.T1),color:'#b8c0cf',width:1.2,dash:[5,4]});
+  sp.texts.push({x:Vmax*0.97,y:n*RL*P.T1/(Vmax*0.97)+Pmax*0.03,text:'T₁',color:'#8a93a6',align:'right'});
+  if(Math.abs(P.T2-P.T1)>0.5){ sp.lines.push({pts:iso(P.T2),color:'#d3c4f5',width:1.2,dash:[5,4]}); sp.texts.push({x:Vmax*0.97,y:n*RL*P.T2/(Vmax*0.97)+Pmax*0.03,text:'T₂',color:'#9d84e0',align:'right'}); }
+  const Vs=P.V(s), expand=P.V2>P.V1, fc=expand?'rgba(31,95,214,0.18)':'rgba(217,72,15,0.20)', lc=expand?'#1f5fd6':'#d9480f';
+  if(P.key==='iso_irr' && $('#lab-ovl').checked){
+    const rp=[]; for(let i=0;i<=60;i++){ const V=V1*Math.pow(V2/V1,i/60); rp.push([V,n*RL*P.T1/V]); }
+    sp.fills.push({pts:[...rp,[V2,0],[V1,0]],color:'rgba(43,138,62,0.10)'});
+    sp.lines.push({pts:rp,color:'#2b8a3e',width:2,dash:[2,3]});
+    sp.texts.push({x:(V1+V2)/2,y:n*RL*P.T1/((V1+V2)/2)+Pmax*0.06,text:'가역 경로 (|w_rev|)',color:'#2b8a3e',align:'center'});
+  }
+  if(P.rev){
+    const pts=[]; for(let i=0;i<=80;i++){ const st=P.at(s*i/80); pts.push([st.V,st.P]); }
+    if(P.key!=='isochoric') sp.fills.push({pts:[...pts,[Vs,0],[V1,0]],color:fc});
+    sp.lines.push({pts,color:lc,width:3,arrow:s>0.05});
+    if(P.key==='isochoric') sp.texts.push({x:V1,y:Pmax*0.08,text:'  ΔV = 0 → 면적 0, w = 0',color:'#5b6475'});
+  } else if(P.key==='free'){
+    const pts=[]; for(let i=0;i<=40;i++){ const V=V1+(Vs-V1)*i/40; pts.push([V,n*RL*P.T1/V]); }
+    sp.lines.push({pts,color:'#8a93a6',width:2,dash:[2,5]});
+    sp.texts.push({x:(V1+V2)/2,y:Pmax*0.9,text:'P_ext = 0 → w = 0 (면적 없음)',color:'#c92a2a',align:'center',bold:true});
+    sp.texts.push({x:(V1+V2)/2,y:Pmax*0.82,text:'점선: 중간 상태 정의 불가',color:'#5b6475',align:'center'});
+  } else {
+    sp.lines.push({pts:[[V1,P1],[V2,P2]],color:'#b0b6c3',width:1.5,dash:[3,5]});
+    sp.fills.push({pts:[[V1,0],[V1,P.Pext],[Vs,P.Pext],[Vs,0]],color:fc});
+    sp.lines.push({pts:[[V1,P.Pext],[Vs,P.Pext]],color:lc,width:3,arrow:s>0.05});
+    if(s>0) sp.lines.push({pts:[[V1,P1],[V1,P.Pext]],color:lc,width:1.5,dash:[4,3]});
+    sp.texts.push({x:Math.min(V1,V2),y:P.Pext+Pmax*0.035,text:`P_ext = ${P.Pext.toFixed(2)} bar`,color:lc,bold:true});
+  }
+  if(P.key!=='free'&&P.key!=='isochoric'&&s>0) sp.texts.push({x:(V1+Vs)/2,y:Math.min(P1,P2,P.Pext||1e9)*0.3,text:'면적 = |w|',color:lc,align:'center',bold:true});
+  sp.points.push({x:V1,y:P1,color:'#1c2230',label:'1'});
+  sp.points.push({x:V2,y:P2,color:'#1c2230',label:'2',hollow:s<1});
+  if(P.rev&&s>0&&s<1){ const st=P.at(s); sp.points.push({x:st.V,y:st.P,color:lc,r:6}); }
+  plot($('#lab-pv'),sp);
+}
+// 채점: 상대오차 2% 또는 절대 3 J 이내
+function within(x,a){ return isFinite(x) && Math.abs(x-a) <= Math.max(0.02*Math.abs(a),3); }
+function gradeInto(prefix,fbPrefix,fin){
+  let ok=0;
+  for(const k of ['q','w','dU','dH']){ const v=parseFloat($(prefix+k).value), el=$(fbPrefix+k);
+    if(isNaN(v)){ el.innerHTML='<span class="muted">미입력</span>'; continue; }
+    if(within(v,fin[k])){ el.innerHTML='<span class="ok">정답 ✓</span>'; ok++; }
+    else el.innerHTML= (within(-v,fin[k])&&Math.abs(fin[k])>3)? '<span class="ng">부호를 확인!</span>' : '<span class="ng">다시 ✗</span>'; }
+  return ok;
+}
+function labCheck(){ const ok=gradeInto('#ck-','#fb-',lab.P.fin); if(ok===4){ lab.shownSol=true; lab.dirty=true; } }
+
+/* =====================================================================
+   4. ③ 경로 비교
+   ===================================================================== */
+const PATHC=['#1f5fd6','#d9480f','#2b8a3e','#7048e8'];
+function pathBuild(){
+  ['pa-gas','pa-n','pa-PA','pa-VA','pa-PB','pa-VB','pa-sel','pa-ret','pa-cyc'].forEach(id=>{ $('#'+id).oninput=pathUpdate; $('#'+id).onchange=pathUpdate; });
+  $('#pa-iso').onclick=()=>{ $('#pa-PB').value=(+$('#pa-PA').value*+$('#pa-VA').value/+$('#pa-VB').value).toFixed(4); pathUpdate(); };
+  pathUpdate();
+}
+function pathData(){
+  const g=$('#pa-gas').value, n=+$('#pa-n').value, PA=+$('#pa-PA').value, VA=+$('#pa-VA').value, PB=+$('#pa-PB').value, VB=+$('#pa-VB').value;
+  const Cvm=GAS[g].Cvm, Cpm=Cvm+R, TA=PA*VA/(n*RL), TB=PB*VB/(n*RL), TC=PB*VA/(n*RL), TD=PA*VB/(n*RL);
+  const dU=n*Cvm*(TB-TA), dH=n*Cpm*(TB-TA);
+  const paths=[
+    {name:'경로 1: 등적 → 등압 (A→C→B)', pts:[[VA,PA],[VA,PB],[VB,PB]], w:-PB*(VB-VA)*LB,
+     tex:[`A\\to C\\ (\\text{등적}, V=${nf(VA,2)}):\\ w_1=0,\\ q_1=nC_{V,m}(T_C-T_A)=${tJ(n*Cvm*(TC-TA))}`,
+          `C\\to B\\ (\\text{등압}, P=${nf(PB,2)}):\\ w_2=-P_B(V_B-V_A)=${tJ(-PB*(VB-VA)*LB)},\\ q_2=nC_{P,m}(T_B-T_C)=${tJ(n*Cpm*(TB-TC))}`,
+          `T_C = \\frac{P_BV_A}{nR} = ${nf(TC,1)}\\ \\text{K}`]},
+    {name:'경로 2: 등압 → 등적 (A→D→B)', pts:[[VA,PA],[VB,PA],[VB,PB]], w:-PA*(VB-VA)*LB,
+     tex:[`A\\to D\\ (\\text{등압}, P=${nf(PA,2)}):\\ w_1=-P_A(V_B-V_A)=${tJ(-PA*(VB-VA)*LB)},\\ q_1=nC_{P,m}(T_D-T_A)=${tJ(n*Cpm*(TD-TA))}`,
+          `D\\to B\\ (\\text{등적}):\\ w_2=0,\\ q_2=nC_{V,m}(T_B-T_D)=${tJ(n*Cvm*(TB-TD))}`,
+          `T_D = \\frac{P_AV_B}{nR} = ${nf(TD,1)}\\ \\text{K}`]},
+    {name:'경로 3: 직선 경로 (가역)', pts:[[VA,PA],[VB,PB]], w:-(PA+PB)/2*(VB-VA)*LB,
+     tex:[`w = -\\int P\\,dV = -\\tfrac12(P_A+P_B)(V_B-V_A) = ${tJ(-(PA+PB)/2*(VB-VA)*LB)}\\quad(\\text{사다리꼴 면적})`]}
+  ];
+  if(Math.abs(TA-TB)/TA<0.005){ const pts=[]; for(let i=0;i<=60;i++){ const V=VA*Math.pow(VB/VA,i/60); pts.push([V,n*RL*TA/V]); }
+    paths.push({name:'경로 4: 등온 가역', pts, w:-n*R*TA*Math.log(VB/VA), tex:[`w = -nRT\\ln\\frac{V_B}{V_A} = ${tJ(-n*R*TA*Math.log(VB/VA))}`]}); }
+  paths.forEach(p=>p.q=dU-p.w);
+  return {g,n,PA,VA,PB,VB,TA,TB,dU,dH,paths};
+}
+function pathUpdate(){
+  const d=pathData(), sel=$('#pa-sel'), ret=$('#pa-ret');
+  const keep=+sel.value||0, keepR=ret.value===''?1:+ret.value;
+  sel.innerHTML=d.paths.map((p,i)=>`<option value="${i}">${p.name}</option>`).join(''); sel.value=Math.min(keep,d.paths.length-1);
+  ret.innerHTML=d.paths.map((p,i)=>`<option value="${i}">복귀: ${p.name.split(':')[0]} 역방향</option>`).join(''); ret.value=Math.min(keepR,d.paths.length-1);
+  const si=+sel.value, ri=+ret.value, cyc=$('#pa-cyc').checked;
+  ret.style.display=cyc?'block':'none';
+  const Vmax=Math.max(d.VA,d.VB)*1.25, Pmax=Math.max(d.PA,d.PB)*1.3;
+  const sp={xr:[0,Vmax],yr:[0,Pmax],xlabel:'V (L)',ylabel:'P (bar)',lines:[],fills:[],points:[],texts:[]};
+  const sP=d.paths[si];
+  if(cyc){ const rP=d.paths[ri]; sp.fills.push({pts:[...sP.pts,...[...rP.pts].reverse()],color:'rgba(112,72,232,0.22)'}); }
+  else sp.fills.push({pts:[...sP.pts,[d.VB,0],[d.VA,0]],color:'rgba(31,95,214,0.14)'});
+  d.paths.forEach((p,i)=>{ const on=i===si||(cyc&&i===ri); const pts=(cyc&&i===ri)?[...p.pts].reverse():p.pts; sp.lines.push({pts,color:PATHC[i],width:on?3.2:1.4,dash:on?[]:[5,4],arrow:on}); });
+  sp.points.push({x:d.VA,y:d.PA,color:'#1c2230',label:`A (${nf(d.TA,0)} K)`},{x:d.VB,y:d.PB,color:'#1c2230',label:`B (${nf(d.TB,0)} K)`});
+  sp.points.push({x:d.VA,y:d.PB,color:'#8a93a6',r:3,label:'C'},{x:d.VB,y:d.PA,color:'#8a93a6',r:3,label:'D'});
+  plot($('#pa-pv'),sp);
+  $('#pa-legend').innerHTML=d.paths.map((p,i)=>`<span><i style="background:${PATHC[i]}"></i>${p.name.split(':')[0]}</span>`).join('');
+  $('#pa-table').innerHTML=`<table><tr><th>경로</th><th>w</th><th>q</th><th>ΔU</th><th>ΔH</th></tr>`+
+    d.paths.map((p,i)=>`<tr style="${i===si?'background:#eef4ff;font-weight:700':''}"><td style="color:${PATHC[i]}">${p.name.split(':')[0]}</td><td>${Jtxt(p.w)}</td><td>${Jtxt(p.q)}</td><td>${Jtxt(d.dU)}</td><td>${Jtxt(d.dH)}</td></tr>`).join('')+`</table>`;
+  $('#pa-msg').innerHTML='ΔU, ΔH는 모든 경로에서 같고(상태함수), q와 w는 경로마다 다릅니다(경로함수). 그러나 q + w 는 항상 ΔU로 같습니다.';
+  let h=[`T_A=${nf(d.TA,1)}\\ \\text{K},\\ T_B=${nf(d.TB,1)}\\ \\text{K}`,
+         `\\Delta U = nC_{V,m}(T_B-T_A) = ${tJ(d.dU)},\\quad \\Delta H = nC_{P,m}(T_B-T_A) = ${tJ(d.dH)}`, ...sP.tex,
+         `w = ${tJ(sP.w)},\\quad q = \\Delta U - w = ${tJ(sP.q)}`];
+  if(cyc){ const rP=d.paths[ri], wc=sP.w-rP.w; h.push(`\\textbf{순환 } A\\to B\\to A:\\ \\oint dU = 0,\\quad w_{cycle} = w_{${si+1}} - w_{${ri+1}} = ${tJ(wc)}`,
+      `q_{cycle} = -w_{cycle} = ${tJ(-wc)}\\ \\ne 0 \\quad\\Rightarrow\\ \\oint \\dbar q \\ne 0`,
+      `|w_{cycle}| = \\text{닫힌 곡선의 면적}`); }
+  $('#pa-detail').innerHTML=h.map(l=>tex(l)).join('');
+}
+
+/* =====================================================================
+   5. ④ 유도 (전미분 → Cv, Cp, Cp−Cv)
+   ===================================================================== */
+const DERIV={
+ cv:{title:'A. 내부에너지 U(T, V)로부터 C<sub>V</sub>와 q<sub>V</sub>', steps:[
+  {h:'1. U는 상태함수 → T와 V의 함수로 쓰고 전미분',m:'U = U(T,V)\\quad\\Rightarrow\\quad dU = \\left(\\frac{\\partial U}{\\partial T}\\right)_V dT + \\left(\\frac{\\partial U}{\\partial V}\\right)_T dV',e:'두 독립변수 T, V가 각각 조금씩 변할 때 U의 변화를 합한 것이 완전미분입니다.'},
+  {h:'2. 열역학 1법칙 (미소형)',m:'dU = \\dbar q + \\dbar w,\\qquad \\dbar w = -P_{ext}\\,dV',e:'\\(\\dbar q,\\ \\dbar w\\)는 경로함수의 미소량(불완전미분)입니다.'},
+  {h:'3. 부피가 일정한 과정',q:{t:'V가 일정(dV = 0)이면 \\(\\dbar w\\)는?',o:['\\(0\\)','\\(-P\\,dV\\)','\\(+P\\,dV\\)'],a:0,hint:'\\(\\dbar w = -P_{ext}dV\\) 에 dV = 0을 대입해 보세요.'},m:'dV = 0 \\Rightarrow \\dbar w = 0 \\Rightarrow dU = \\dbar q_V',e:'아래첨자 V는 "부피 일정 조건에서의 열"을 뜻합니다.'},
+  {h:'4. 전미분에도 dV = 0 대입',q:{t:'등적에서 \\(\\dbar q_V / dT\\)는 어떤 편미분과 같을까요?',o:['\\((\\partial U/\\partial T)_V\\)','\\((\\partial H/\\partial T)_P\\)','\\((\\partial U/\\partial V)_T\\)'],a:0,hint:'단계 1의 식에서 dV 항이 사라지면 무엇이 남나요?'},m:'dU = \\left(\\frac{\\partial U}{\\partial T}\\right)_V dT = \\dbar q_V',e:'같은 dU를 두 가지 방법(전미분, 1법칙)으로 표현해 연결했습니다.'},
+  {h:'5. 정적 열용량의 열역학적 정의',m:'C_V \\equiv \\left(\\frac{\\partial U}{\\partial T}\\right)_V = \\frac{\\dbar q_V}{dT}\\qquad\\Rightarrow\\qquad dU = C_V\\,dT + \\left(\\frac{\\partial U}{\\partial V}\\right)_T dV',e:'C<sub>V</sub>는 "부피 일정에서 온도를 1 K 올리는 데 필요한 열"이면서 동시에 U의 T에 대한 기울기입니다.'},
+  {h:'6. 적분하여 q<sub>V</sub> 구하기',m:'q_V = \\Delta U = \\int_{T_1}^{T_2} C_V\\,dT = nC_{V,m}(T_2-T_1)\\quad(C_{V,m}\\ \\text{일정})',e:'경로함수 q가 등적 조건에서는 상태함수 ΔU와 같아집니다.'},
+  {h:'7. 이상기체는 (∂U/∂V)<sub>T</sub> = 0 (줄 실험)',q:{t:'이상기체 단열 자유팽창에서 온도 변화는?',o:['없다 (ΔT = 0)','감소','증가'],a:0,hint:'q = 0, w = 0 → ΔU = 0, 그리고 U = U(T).'},m:'dU = C_V\\,dT \\Rightarrow \\Delta U = nC_{V,m}\\Delta T\\quad(\\text{이상기체: 어떤 과정이든})',e:'그래서 실험실 탭의 모든 이상기체 과정에서 ΔU = nC<sub>V,m</sub>ΔT로 계산할 수 있습니다.'}
+ ]},
+ cp:{title:'B. 엔탈피 H(T, P)로부터 C<sub>P</sub>와 q<sub>P</sub>', steps:[
+  {h:'1. 엔탈피의 정의 (상태함수)',m:'H \\equiv U + PV',e:'U, P, V가 모두 상태함수이므로 H도 상태함수입니다.'},
+  {h:'2. 미분',m:'dH = dU + d(PV) = dU + P\\,dV + V\\,dP',e:'곱의 미분법칙.'},
+  {h:'3. 1법칙 대입 (P<sub>ext</sub> = P, 팽창일만)',m:'dU = \\dbar q - P\\,dV \\;\\Rightarrow\\; dH = \\dbar q - P\\,dV + P\\,dV + V\\,dP = \\dbar q + V\\,dP',e:'팽창일 항이 정확히 상쇄됩니다.'},
+  {h:'4. 압력이 일정한 과정',q:{t:'dP = 0 이면 dH = ?',o:['\\(\\dbar q_P\\)','\\(\\dbar q_P - P\\,dV\\)','\\(0\\)'],a:0,hint:'단계 3의 식에서 V dP 항을 지워 보세요.'},m:'dP = 0 \\Rightarrow dH = \\dbar q_P',e:''},
+  {h:'5. H를 T, P의 함수로 쓰고 전미분',m:'H = H(T,P)\\;\\Rightarrow\\; dH = \\left(\\frac{\\partial H}{\\partial T}\\right)_P dT + \\left(\\frac{\\partial H}{\\partial P}\\right)_T dP',e:'U에서 (T, V)를 택했던 것처럼, H는 (T, P)를 택하면 편리합니다.'},
+  {h:'6. dP = 0 대입 → 정압 열용량의 정의',q:{t:'등압에서 \\(\\dbar q_P/dT\\)는?',o:['\\((\\partial H/\\partial T)_P\\)','\\((\\partial U/\\partial T)_V\\)','\\((\\partial H/\\partial P)_T\\)'],a:0,hint:'단계 5의 식에서 dP 항이 사라집니다.'},m:'\\dbar q_P = \\left(\\frac{\\partial H}{\\partial T}\\right)_P dT\\quad\\Rightarrow\\quad C_P \\equiv \\left(\\frac{\\partial H}{\\partial T}\\right)_P = \\frac{\\dbar q_P}{dT}',e:''},
+  {h:'7. 적분하여 q<sub>P</sub> 구하기',m:'q_P = \\Delta H = \\int_{T_1}^{T_2} C_P\\,dT = nC_{P,m}(T_2-T_1)',e:'이상기체는 \\((\\partial H/\\partial P)_T = 0\\) 이므로 어떤 과정이든 \\(\\Delta H = nC_{P,m}\\Delta T\\).'}
+ ]},
+ cpcv:{title:'C. C<sub>P</sub> − C<sub>V</sub> = nR 유도', steps:[
+  {h:'1. 출발',m:'C_P - C_V = \\left(\\frac{\\partial H}{\\partial T}\\right)_P - \\left(\\frac{\\partial U}{\\partial T}\\right)_V',e:''},
+  {h:'2. H = U + PV 를 P 일정에서 T로 미분',m:'\\left(\\frac{\\partial H}{\\partial T}\\right)_P = \\left(\\frac{\\partial U}{\\partial T}\\right)_P + P\\left(\\frac{\\partial V}{\\partial T}\\right)_P',e:''},
+  {h:'3. U(T,V)의 전미분을 P 일정에서 dT로 나누기',m:'\\left(\\frac{\\partial U}{\\partial T}\\right)_P = \\left(\\frac{\\partial U}{\\partial T}\\right)_V + \\left(\\frac{\\partial U}{\\partial V}\\right)_T\\left(\\frac{\\partial V}{\\partial T}\\right)_P',e:'dU = C<sub>V</sub>dT + (∂U/∂V)<sub>T</sub>dV 를 등압 조건에서 dT로 나눈 것입니다.'},
+  {h:'4. 일반식',m:'C_P - C_V = \\left[P + \\left(\\frac{\\partial U}{\\partial V}\\right)_T\\right]\\left(\\frac{\\partial V}{\\partial T}\\right)_P',e:'P 항: 팽창하며 외부에 하는 일, (∂U/∂V)<sub>T</sub> 항: 분자 간 인력에 대한 일(내압).'},
+  {h:'5. 이상기체 적용',q:{t:'이상기체 PV = nRT 에서 \\((\\partial V/\\partial T)_P\\)는?',o:['\\(nR/P\\)','\\(nRT/P\\)','\\(R/V\\)'],a:0,hint:'V = nRT/P 를 P 일정에서 T로 미분.'},m:'\\left(\\frac{\\partial U}{\\partial V}\\right)_T = 0,\\quad \\left(\\frac{\\partial V}{\\partial T}\\right)_P = \\frac{nR}{P}\\;\\Rightarrow\\; C_P - C_V = P\\cdot\\frac{nR}{P} = nR',e:''},
+  {h:'6. 간단한 방법 (이상기체)',m:'H = U + PV = U + nRT \\;\\Rightarrow\\; \\frac{dH}{dT} = \\frac{dU}{dT} + nR \\;\\Rightarrow\\; C_P = C_V + nR',e:'몰 열용량: \\(C_{P,m} = C_{V,m} + R\\). 단원자 \\(\\tfrac32R \\to \\tfrac52R\\ (\\gamma = 5/3)\\), 이원자 \\(\\tfrac52R \\to \\tfrac72R\\ (\\gamma = 7/5)\\).'},
+  {h:'7. 물리적 의미',m:'q_P - q_V = n(C_{P,m}-C_{V,m})\\Delta T = nR\\Delta T = P\\Delta V',e:'같은 ΔT를 얻으려면 등압에서는 팽창일 PΔV만큼 열이 더 필요합니다. 오른쪽 실험으로 확인해 보세요.'}
+ ]}
+};
+const dv={cur:'cv',shown:1,wrong:-1};
+function dvRender(){
+  const D=DERIV[dv.cur]; let h=`<h2>${D.title}</h2>`;
+  D.steps.slice(0,dv.shown).forEach(s=>{ h+=`<div class="dstep"><h4>${s.h}</h4>${tex(s.m)}${s.e?`<div class="muted">${md(s.e)}</div>`:''}</div>`; });
+  if(dv.shown<D.steps.length){ const nx=D.steps[dv.shown];
+    if(nx.q){ h+=`<div class="quiz"><b>확인:</b> ${md(nx.q.t)}<div>${nx.q.o.map((o,i)=>`<button data-i="${i}" class="${dv.wrong===i?'wrong':''}">${md(o)}</button>`).join('')}</div>${dv.wrong>=0?`<div class="ng" style="font-weight:400">힌트: ${md(nx.q.hint)}</div>`:''}</div>`; }
+    else h+=`<button class="btn" id="dv-next">다음 단계 ▸</button>`;
+  } else h+=`<div class="note">유도 완료! 다른 유도(A/B/C)도 해 보세요.</div>`;
+  h+=` <button class="btn ghost" id="dv-all" style="margin-top:6px">모두 펼치기</button>`;
+  $('#dv-box').innerHTML=h;
+  const nb=$('#dv-next'); if(nb) nb.onclick=()=>{dv.shown++;dv.wrong=-1;dvRender();};
+  $('#dv-all').onclick=()=>{dv.shown=D.steps.length;dvRender();};
+  $$('#dv-box .quiz button').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i, q=D.steps[dv.shown].q; if(i===q.a){dv.shown++;dv.wrong=-1;} else dv.wrong=i; dvRender(); });
+}
+$$('[data-dv]').forEach(b=>b.onclick=()=>{ dv.cur=b.dataset.dv; dv.shown=1; dv.wrong=-1; dvRender(); });
+
+// Cp - Cv 실험 (두 실린더)
+const cc={s:0,playing:false,a:null,b:null,dirty:true};
+function ccBuild(){ cc.a=new Cyl($('#cc-a'),50); cc.b=new Cyl($('#cc-b'),50);
+  ['cc-gas','cc-n','cc-dT'].forEach(id=>$('#'+id).oninput=()=>{cc.s=0;cc.playing=false;cc.dirty=true;});
+  $('#cc-play').onclick=()=>{ if(cc.s>=1)cc.s=0; cc.playing=true; };
+  $('#cc-reset').onclick=()=>{cc.s=0;cc.playing=false;cc.dirty=true;}; }
+function ccFrame(dt){
+  const g=$('#cc-gas').value,n=+$('#cc-n').value,dT=+$('#cc-dT').value,T1=300,P=1;
+  $('#cc-n-v').textContent=n.toFixed(1); $('#cc-dT-v').textContent=dT;
+  if(cc.playing){ cc.s=Math.min(1,cc.s+dt/3); if(cc.s>=1)cc.playing=false; cc.dirty=true; }
+  const T=T1+dT*cc.s, V1=n*RL*T1/P, Vd=n*RL*(T1+300)/P*1.1, h=cc.playing?1:0;
+  cc.a.step(dt,T,V1/Vd); cc.b.step(dt,T,(n*RL*T/P)/Vd);
+  cc.a.draw({bound:V1/Vd,T,mode:'heat',heat:h,weight:{type:'pin'},bathText:'가열기'});
+  cc.b.draw({bound:(n*RL*T/P)/Vd,T,mode:'heat',heat:h,work:cc.playing?1:0,weight:{type:'block',text:'P = 1 bar'},bathText:'가열기'});
+  if(!cc.dirty) return; cc.dirty=false;
+  const Cvm=GAS[g].Cvm,Cpm=Cvm+R,x=dT*cc.s, qV=n*Cvm*x, qP=n*Cpm*x, w=-n*R*x;
+  $('#cc-out').innerHTML=[`q_V = \\Delta U = nC_{V,m}\\Delta T = (${nf(n,1)})(${nf(Cvm,2)})(${nf(x,0)}) = ${tJ(qV)}`,
+    `q_P = \\Delta H = nC_{P,m}\\Delta T = (${nf(n,1)})(${nf(Cpm,2)})(${nf(x,0)}) = ${tJ(qP)}`,
+    `\\text{등압: } \\Delta U = nC_{V,m}\\Delta T = ${tJ(qV)}\\ (\\text{같음}),\\quad w = -P\\Delta V = -nR\\Delta T = ${tJ(w)}`,
+    `q_P - q_V = nR\\Delta T = ${tJ(qP-qV)}\\quad\\Rightarrow\\quad C_{P,m} - C_{V,m} = R`].map(l=>tex(l)).join('')
+    +`<div class="bars" id="cc-bars"></div>`;
+  const m=Math.max(1,n*3.5*R*dT);
+  $('#cc-bars').innerHTML=[['q_V',qV,'var(--q)'],['q_P',qP,'var(--q)'],['−w (P 일정)',-w,'var(--w)']].map(([k,v,c])=>`<div class="bar"><b style="color:${c};font-size:13px">${k}</b><div class="track" style="background:#f0f2f6"><div class="fill" style="background:${c};left:0;width:${v/m*100}%"></div></div><span class="val">${Jtxt(v)}</span></div>`).join('');
+}
+
+/* =====================================================================
+   6. ⑤ 줄-톰슨
+   ===================================================================== */
+const JTG={ N2:{name:'질소 N₂',a:1.370,b:0.0387,Cp:29.1}, CO2:{name:'이산화탄소 CO₂',a:3.640,b:0.04267,Cp:37.1},
+  Ar:{name:'아르곤 Ar',a:1.355,b:0.0320,Cp:20.8}, O2:{name:'산소 O₂',a:1.382,b:0.03186,Cp:29.4},
+  H2:{name:'수소 H₂',a:0.2476,b:0.02661,Cp:28.8}, He:{name:'헬륨 He',a:0.0346,b:0.0238,Cp:20.8},
+  ideal:{name:'이상기체 (a = b = 0)',a:0,b:0,Cp:29.1} };
+const mu=(g,T)=> (2*g.a/(RL*T)-g.b)*LB/g.Cp;          // K/bar
+function jtPath(g,T1,P1,P2){ const N=400,dP=(P2-P1)/N; let T=T1; const pts=[[P1,T]];
+  for(let i=0;i<N;i++){ const k1=mu(g,T), k2=mu(g,Math.max(5,T+k1*dP/2)); T=Math.max(5,T+k2*dP); pts.push([P1+dP*(i+1),T]); } return pts; }
+const jt={s:0,playing:true,t:0,dirty:true,parts:[]};
+function jtBuild(){
+  $('#jt-gas').innerHTML=Object.entries(JTG).map(([k,v])=>`<option value="${k}">${v.name}  (a=${v.a}, b=${v.b})</option>`).join('');
+  ['jt-gas','jt-T1','jt-P1','jt-P2'].forEach(id=>$('#'+id).oninput=()=>jt.dirty=true);
+  $('#jt-play').onclick=()=>{ jt.playing=!jt.playing; $('#jt-play').textContent=jt.playing?'⏸ 정지':'▶ 흐름'; };
+  $('#jt-play').textContent='⏸ 정지';
+  for(let i=0;i<90;i++) jt.parts.push({u:Math.random(),v:Math.random(),su:0.1+Math.random()*0.25,sv:0.1+Math.random()*0.25});
+}
+const tri=x=>{ x=x-Math.floor(x); return x<0.5?2*x:2-2*x; };
+function jtFrame(dt){
+  const g=JTG[$('#jt-gas').value], T1=+$('#jt-T1').value; let P1=+$('#jt-P1').value, P2=+$('#jt-P2').value;
+  if(P2>=P1){ P2=Math.max(1,P1-1); $('#jt-P2').value=P2; }
+  $('#jt-T1-v').textContent=T1; $('#jt-P1-v').textContent=P1; $('#jt-P2-v').textContent=P2;
+  const path=jtPath(g,T1,P1,P2), T2=path[path.length-1][1];
+  if(jt.playing){ jt.s=(jt.s+dt/4)%1; } jt.t+=dt;
+  // 애니메이션
+  const {ctx,W,H}=fit($('#jt-anim')); ctx.clearRect(0,0,W,H);
+  const yc=H/2, th=90, plugW=34, pl=W/2-plugW/2, prr=W/2+plugW/2;
+  let Lw=W/2-60, ratio=(P1/P2)*(T2/T1), Rw=Lw*ratio; const maxR=W/2-40;
+  if(Rw>maxR){ Lw*=maxR/Rw; Rw=maxR; }
+  ctx.fillStyle='#fff1d6'; ctx.fillRect(10,yc-th/2-12,W-20,10); ctx.fillRect(10,yc+th/2+2,W-20,10);
+  ctx.strokeStyle='#3d4558'; ctx.lineWidth=2; ctx.strokeRect(10,yc-th/2-2,W-20,th+4);
+  const s=jt.s, lx0=pl-Lw*(1-s), rx1=prr+Rw*s;
+  ctx.fillStyle=tColor(T1,0.15); ctx.fillRect(lx0,yc-th/2,pl-lx0,th);
+  ctx.fillStyle=tColor(T2,0.15); ctx.fillRect(prr,yc-th/2,rx1-prr,th);
+  const N=jt.parts.length, nL=Math.round(N*(1-s));
+  jt.parts.forEach((q,i)=>{ const left=i<nL; const x0=left?lx0:prr, w=left?pl-lx0:rx1-prr; if(w<3) return;
+    const x=x0+3+tri(q.u+q.su*jt.t*(left?1:1.3))*(w-6), y=yc-th/2+4+tri(q.v+q.sv*jt.t)*(th-8);
+    ctx.fillStyle=tColor(left?T1:T2); ctx.beginPath(); ctx.arc(x,y,3,0,7); ctx.fill(); });
+  // 다공성 마개
+  ctx.fillStyle='#c9ccd4'; ctx.fillRect(pl,yc-th/2,plugW,th); ctx.fillStyle='#8a93a6';
+  for(let yy=yc-th/2+5;yy<yc+th/2;yy+=8) for(let xx=pl+4;xx<prr;xx+=8){ ctx.beginPath(); ctx.arc(xx+((yy/8)%2)*3,yy,1.6,0,7); ctx.fill(); }
+  // 피스톤
+  ctx.fillStyle='#6b7385'; ctx.fillRect(lx0-10,yc-th/2,10,th); ctx.fillRect(rx1,yc-th/2,10,th);
+  arrow(ctx,lx0-40,yc,lx0-14,yc,'#2b8a3e'); arrow(ctx,rx1+14,yc,rx1+40,yc,'#2b8a3e');
+  ctx.fillStyle='#1c2230'; ctx.font='12.5px "Noto Sans KR",sans-serif'; ctx.textAlign='center';
+  ctx.fillText(`P₁ = ${P1} bar, T₁ = ${T1} K`, W/4, yc-th/2-18); ctx.fillText(`P₂ = ${P2} bar, T₂ = ${T2.toFixed(1)} K`, 3*W/4, yc-th/2-18);
+  ctx.fillText('다공성 마개',W/2,yc+th/2+28); ctx.fillStyle='#a5701a'; ctx.fillText('단열 (q = 0)',W/2,yc-th/2-18+0);
+  if(!jt.dirty) return; jt.dirty=false;
+  const m1=mu(g,T1), Tinv=g.a>0?2*g.a/(RL*g.b):Infinity;
+  // μ-T 그래프
+  const Tmax=Math.min(2500,Math.max(1000,isFinite(Tinv)?Tinv*1.3:1000)), mp=[];
+  for(let i=1;i<=200;i++){ const T=40+(Tmax-40)*i/200; mp.push([T,mu(g,T)]); }
+  const ys=mp.map(p=>p[1]), ymax=Math.max(0.2,Math.min(Math.max(...ys),Math.abs(m1)*2.5+0.3)), ymin=Math.min(-0.1,Math.min(...ys));
+  const spm={xr:[0,Tmax],yr:[ymin,ymax],xlabel:'T (K)',ylabel:'μ_JT (K/bar)',zeroY:true,lines:[{pts:mp,color:'#7048e8',width:2.5}],points:[{x:T1,y:m1,color:'#d9480f',label:`T₁: μ = ${m1.toFixed(3)}`}],texts:[]};
+  if(isFinite(Tinv)&&Tinv<Tmax){ spm.points.push({x:Tinv,y:0,color:'#1c2230',r:4,label:`T_inv ≈ ${Tinv.toFixed(0)} K`}); }
+  spm.texts.push({x:Tmax*0.02,y:ymax*0.9,text:'μ > 0 : 팽창 시 냉각',color:'#1971c2'},{x:Tmax*0.55,y:ymin*0.5,text:'μ < 0 : 팽창 시 가열',color:'#c92a2a'});
+  plot($('#jt-mu'),spm);
+  // T-P 등엔탈피선
+  const Ts=path.map(p=>p[1]), tmin=Math.min(...Ts), tmax=Math.max(...Ts), pad=Math.max(5,(tmax-tmin)*0.3);
+  plot($('#jt-tp'),{xr:[0,P1*1.05],yr:[tmin-pad,tmax+pad],xlabel:'P (bar)',ylabel:'T (K)',
+    lines:[{pts:[...path].reverse().reverse(),color:'#1f5fd6',width:2.5,arrow:true}],
+    points:[{x:P1,y:T1,color:'#1c2230',label:'1'},{x:P2,y:T2,color:'#1c2230',label:'2'}],texts:[{x:P1*0.03,y:tmax+pad*0.6,text:'H = 일정 (화살표: 팽창 방향)',color:'#5b6475'}]});
+  const dT=T2-T1;
+  $('#jt-out').innerHTML=[`\\mu_{JT}(T_1) \\approx \\frac{1}{C_{P,m}}\\left(\\frac{2a}{RT_1}-b\\right) = ${nf(m1,4)}\\ \\text{K bar}^{-1}`,
+    `\\Delta T \\approx \\mu_{JT}\\Delta P = (${nf(m1,3)})(${nf(P2-P1,0)}) = ${nf(m1*(P2-P1),2)}\\ \\text{K}`,
+    `\\text{적분 결과: } T_2 = ${nf(T2,2)}\\ \\text{K}\\ (\\Delta T = ${nf(dT,2)}\\ \\text{K})`,
+    `T_{inv} = \\frac{2a}{Rb} = ${isFinite(Tinv)?nf(Tinv,0)+'\\ \\text{K}':'\\infty'}`,
+    `q = 0,\\quad \\Delta H = 0,\\quad \\Delta U = w = P_1V_1 - P_2V_2`].map(l=>tex(l)).join('')
+    +`<p class="muted">${g.a===0?'이상기체: μ = 0, 온도 변화 없음.':(dT<0?'→ 교축 팽창으로 <b style="color:#1971c2">냉각</b> (기체 액화·냉동의 원리)':'→ 역전온도보다 높아 <b style="color:#c92a2a">가열</b>')}</p>`;
+}
+
+/* =====================================================================
+   7. ⑥ 연습문제
+   ===================================================================== */
+const qz={P:null,shown:false,right:0,total:0,graded:false};
+const rnd=(a,b,d=1)=>+(a+Math.random()*(b-a)).toFixed(d), pick=a=>a[Math.floor(Math.random()*a.length)];
+function qzBuild(){
+  $('#qz-type').innerHTML='<option value="any">모든 과정 (무작위)</option>'+Object.entries(PROC).map(([k,v])=>`<option value="${k}">${v.full}</option>`).join('');
+  $('#qz-new').onclick=qzNew; $('#qz-go').onclick=qzGrade;
+  $('#qz-show').onclick=()=>{ qz.shown=true; qzSol(); };
+  $('#qz-lab').onclick=()=>{ const P=qz.P; if(!P) return;
+    $('#lab-gas').value=P.c.gas; $('#lab-n').value=P.c.n; $('#lab-T1').value=P.c.T1; $('#lab-P1').value=P.c.P1;
+    lab.key=P.key; lab.params[P.key]=P.c.p; labSetPar(); $('#lab-par').value=P.c.p; lab.params[P.key]=P.c.p; $('#lab-hide').checked=false; labReset(); showTab('lab'); };
+  qzNew();
+}
+function qzNew(){
+  let key=$('#qz-type').value; if(key==='any') key=pick(Object.keys(PROC));
+  const gas=pick(['mono','di']), n=rnd(0.5,3,1), T1=Math.round(rnd(250,400,0)/5)*5, P1=rnd(1,5,1);
+  let p;
+  if(key==='iso_rev'||key==='adia_rev') p=pick([0.5,0.4,2,2.5,3]);
+  else if(key==='free') p=pick([2,2.5,3,4]);
+  else if(key==='iso_irr'||key==='adia_irr') p=+(P1*pick([0.25,0.4,0.5,2,2.5])).toFixed(2);
+  else p=T1+pick([-1,1,1])*Math.round(rnd(50,250,0)/5)*5;
+  const c=gasCtx(gas,n,T1,P1,p), P=process(key,c); qz.P=P; qz.shown=false; qz.graded=false;
+  const gname=gas==='mono'?'단원자':'이원자', st=`${gname} 이상기체 ${n} mol이 ${T1} K, ${P1} bar 상태에 있다.`;
+  const ex=P.V2>P.V1?'팽창':'압축';
+  const Q={
+    iso_rev:`${st} 이 기체가 <b>등온 가역적으로</b> 부피가 처음의 ${p}배가 될 때까지 ${ex}한다.`,
+    iso_irr:`${st} 이 기체가 일정한 외부압력 <b>${p} bar</b>에 대해 <b>등온적으로</b> ${ex}하여 외부압력과 평형에 도달한다.`,
+    free:`${st} 단열된 용기에서 칸막이를 제거하여 기체가 <b>진공으로 자유팽창</b>하고, 부피가 처음의 ${p}배가 된다.`,
+    isochoric:`${st} 부피를 일정하게 유지하면서 온도를 <b>${p} K</b>로 ${p>T1?'가열':'냉각'}한다.`,
+    isobaric:`${st} 압력을 일정하게 유지하면서 온도를 <b>${p} K</b>로 ${p>T1?'가열':'냉각'}한다.`,
+    adia_rev:`${st} 이 기체가 <b>단열 가역적으로</b> 부피가 처음의 ${p}배가 될 때까지 ${ex}한다.`,
+    adia_irr:`${st} 단열된 실린더에서 이 기체가 일정한 외부압력 <b>${p} bar</b>에 대해 ${ex}하여 평형에 도달한다.`
+  }[key];
+  $('#qz-text').innerHTML=`<span class="pill" style="background:var(--accent-soft);color:var(--accent)">${PROC[key].full}</span><p>${Q}<br>q, w, ΔU, ΔH를 구하라.</p>`;
+  ['q','w','dU','dH'].forEach(k=>{ $('#qz-'+k).value=''; $('#qf-'+k).innerHTML=''; });
+  $('#qz-sol').innerHTML='<span class="muted">채점 후 또는 \'풀이 보기\'를 누르면 표시됩니다.</span>';
+}
+function qzGrade(){ const ok=gradeInto('#qz-','#qf-',qz.P.fin); if(!qz.graded){ qz.total++; if(ok===4) qz.right++; qz.graded=true; }
+  $('#qz-score').textContent=`점수: ${qz.right} / ${qz.total} 문제 완벽 정답`; qzSol(); }
+function qzSol(){ $('#qz-sol').innerHTML=solutionTeX(qz.P).map(l=>tex(l)).join(''); }
+
+/* =====================================================================
+   8. 탭 전환, 애니메이션 루프, 초기화
+   ===================================================================== */
+let curTab='concept';
+function showTab(t){ curTab=t; $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t)); $$('section.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));
+  lab.dirty=cc.dirty=jt.dirty=true; if(t==='path') pathUpdate(); }
+let last=performance.now();
+function loop(now){ const dt=Math.min(0.05,(now-last)/1000); last=now;
+  if(curTab==='lab') labFrame(dt); else if(curTab==='deriv') ccFrame(dt); else if(curTab==='jt') jtFrame(dt);
+  requestAnimationFrame(loop); }
+window.addEventListener('resize',()=>{ lab.dirty=cc.dirty=jt.dirty=true; if(curTab==='path') pathUpdate(); });
+document.addEventListener('DOMContentLoaded',()=>{
+  renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],macros:MACROS,strict:false,throwOnError:false});
+  $$('#nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.t));
+  labBuild(); pathBuild(); dvRender(); ccBuild(); jtBuild(); qzBuild();
+  requestAnimationFrame(loop);
+});
+</script>
+</body>
+</html>
